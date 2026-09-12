@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import { AuthProvider } from './context/AuthContext'
+import { I18nProvider } from './lib/i18n'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 import { HomePage } from './pages/HomePage'
-import { CreatorPage } from './pages/CreatorPage'
+import { CampaignPage } from './pages/CampaignPage'
+import { CreatorProfilePage } from './pages/CreatorProfilePage'
+import { CreateCampaignPage } from './pages/CreateCampaignPage'
 import { LoginPage } from './pages/LoginPage'
 import { OnboardingPage } from './pages/OnboardingPage'
 import { DashboardPage } from './pages/DashboardPage'
 import { SettingsPage } from './pages/SettingsPage'
+import { AdminPage } from './pages/AdminPage'
 
 export const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
@@ -27,16 +31,38 @@ export const App: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const getUsername = (p: string) => {
-    const match = p.match(/^\/@([a-zA-Z0-9_]+)$/)
-    return match ? match[1] : null
-  }
+  // Analyse des routes avec slugs et username (indépendant du nom de domaine)
+  // Format 1 : /@username/:slug (Collecte spécifique)
+  const campaignMatch = currentPath.match(/^\/@([a-zA-Z0-9_]+)\/([a-zA-Z0-9_-]+)$/)
 
-  const username = getUsername(currentPath)
+  // Format 2 : /@username (Profil organisateur)
+  const profileMatch = currentPath.match(/^\/@([a-zA-Z0-9_]+)$/)
 
   const renderRoute = () => {
-    if (currentPath === '/') {
-      return <HomePage onNavigate={navigate} />
+    // 1. Page de collecte dédiée : /@username/:slug
+    if (campaignMatch) {
+      return (
+        <CampaignPage
+          username={campaignMatch[1]}
+          slug={campaignMatch[2]}
+          onNavigate={navigate}
+        />
+      )
+    }
+
+    // 2. Page de profil public : /@username
+    if (profileMatch) {
+      return (
+        <CreatorProfilePage
+          username={profileMatch[1]}
+          onNavigate={navigate}
+        />
+      )
+    }
+
+    // 3. Routes applicatives standards
+    if (currentPath === '/create') {
+      return <CreateCampaignPage onNavigate={navigate} />
     }
     if (currentPath === '/login') {
       return <LoginPage onNavigate={navigate} />
@@ -50,20 +76,25 @@ export const App: React.FC = () => {
     if (currentPath === '/settings') {
       return <SettingsPage onNavigate={navigate} />
     }
-    if (username) {
-      return <CreatorPage username={username} onNavigate={navigate} />
+    if (currentPath === '/admin') {
+      return <AdminPage onNavigate={navigate} />
     }
+
+    // Par défaut : Landing Page
     return <HomePage onNavigate={navigate} />
   }
 
   return (
-    <AuthProvider>
-      <div className="min-h-screen flex flex-col bg-[#faf8f5]">
-        <Navbar onNavigate={navigate} />
-        <main className="flex-1">{renderRoute()}</main>
-        <Footer />
-      </div>
-    </AuthProvider>
+    <I18nProvider>
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col bg-[#faf9f6]">
+          <Navbar onNavigate={navigate} />
+          <main className="flex-1">{renderRoute()}</main>
+          <Footer onNavigate={navigate} />
+        </div>
+      </AuthProvider>
+    </I18nProvider>
   )
 }
+
 export default App

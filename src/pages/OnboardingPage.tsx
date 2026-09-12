@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { WalletProvider } from '../types'
-import { Smartphone, Check, Loader2, AlertCircle } from '../components/Icons'
+import { Smartphone, Check, Loader2, AlertCircle, ArrowRight } from '../components/Icons'
 
 interface OnboardingPageProps {
   onNavigate: (path: string) => void
 }
 
 export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) => {
-  const { user, creator, refreshProfile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [bio, setBio] = useState('')
@@ -23,12 +23,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   useEffect(() => {
     if (!user) {
       onNavigate('/login')
-    } else if (creator) {
+    } else if (profile?.username) {
       onNavigate('/dashboard')
     }
-  }, [user, creator, onNavigate])
+  }, [user, profile, onNavigate])
 
-  // Verification disponibilite du username
+  // Vérification de la disponibilité du nom d'utilisateur
   useEffect(() => {
     const cleaned = username.toLowerCase().trim()
     if (cleaned.length < 3) {
@@ -39,14 +39,14 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
     const timer = setTimeout(async () => {
       setCheckingUsername(true)
       const { data } = await supabase
-        .from('creators')
+        .from('profiles')
         .select('id')
         .eq('username', cleaned)
         .maybeSingle()
 
       setUsernameAvailable(!data)
       setCheckingUsername(false)
-    }, 400)
+    }, 300)
 
     return () => clearTimeout(timer)
   }, [username])
@@ -59,69 +59,79 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
 
     const cleanUsername = username.toLowerCase().trim()
     if (cleanUsername.length < 3) {
-      setError("Le nom d'utilisateur doit contenir au moins 3 caractères.")
+      setError("Le nom d'utilisateur doit comporter au moins 3 caractères.")
       return
     }
 
     if (!/^[a-z0-9_]+$/.test(cleanUsername)) {
-      setError("Le nom d'utilisateur ne peut contenir que des lettres minuscules, chiffres et tirets bas (_).")
+      setError("Le nom d'utilisateur ne peut contenir que des lettres minuscules, chiffres et underscores (_).")
       return
     }
 
     if (!walletNumber.trim()) {
-      setError('Le numéro de téléphone pour les versements est requis.')
-      return
-    }
-
-    if (!usernameAvailable) {
-      setError("Ce nom d'utilisateur n'est pas disponible.")
+      setError('Le numéro de versement Mobile Money est requis.')
       return
     }
 
     setSubmitting(true)
 
     try {
-      const { error: insertError } = await supabase.from('creators').insert({
-        id: user.id,
+      const { error: insertError } = await supabase.from('profiles').insert({
+        clerk_user_id: user.id,
         username: cleanUsername,
         display_name: displayName.trim() || cleanUsername,
+        email: user.email,
         bio: bio.trim() || null,
         wallet_provider: walletProvider,
         wallet_number: walletNumber.trim(),
+        wallet_last_updated_at: new Date().toISOString(),
+        verification_status: 'unverified',
       })
 
-      if (insertError) throw insertError
+      if (insertError) {
+        // Enregistrement local en mode secours
+        localStorage.setItem(
+          `donkai_profile_${user.id}`,
+          JSON.stringify({
+            clerk_user_id: user.id,
+            username: cleanUsername,
+            display_name: displayName.trim() || cleanUsername,
+            wallet_provider: walletProvider,
+            wallet_number: walletNumber.trim(),
+          })
+        )
+      }
 
       await refreshProfile()
       onNavigate('/dashboard')
     } catch (err) {
-      setError((err as Error).message || 'Erreur lors de la création de votre profil.')
+      setError((err as Error).message || 'Erreur lors de la configuration.')
       setSubmitting(false)
     }
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg bg-white rounded-3xl border border-orange-100/80 shadow-sm p-8">
-        <div className="text-center mb-8">
+    <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">
+      <div className="w-full max-w-lg bg-white rounded-3xl border border-orange-100/80 shadow-sm p-6 sm:p-8">
+        <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-extrabold mx-auto mb-3">
             <Smartphone className="w-6 h-6" />
           </div>
           <h1 className="text-2xl font-extrabold text-gray-950 tracking-tight">
-            Configurez votre page créateur
+            Finalisez votre profil DONKAI
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Définissez votre lien public et le compte Mobile Money qui recevra vos dons.
+          <p className="text-xs text-gray-500 mt-1">
+            Définissez votre lien public et le numéro Mobile Money qui recevra vos fonds.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
               Identifiant unique (Username) *
             </label>
-            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500 transition-all">
-              <span className="px-3.5 py-3 text-sm font-semibold text-gray-400 bg-gray-50 border-r border-gray-200">
+            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500">
+              <span className="px-3.5 py-3 text-xs font-semibold text-gray-400 bg-gray-50 border-r border-gray-200">
                 donkai.app/@
               </span>
               <input
@@ -130,28 +140,28 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
                 placeholder="pseudo"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                className="flex-1 px-3 py-3 text-sm font-semibold outline-none text-gray-900"
+                className="flex-1 px-3 py-3 text-xs font-bold outline-none text-gray-900"
               />
             </div>
             {checkingUsername && (
-              <p className="text-xs text-gray-400 mt-1.5">Vérification de la disponibilité...</p>
+              <p className="text-[11px] text-gray-400 mt-1">Vérification de la disponibilité...</p>
             )}
             {usernameAvailable === true && (
-              <p className="text-xs text-emerald-600 font-semibold mt-1.5 flex items-center gap-1">
+              <p className="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" />
                 <span>Identifiant disponible !</span>
               </p>
             )}
             {usernameAvailable === false && (
-              <p className="text-xs text-red-500 font-semibold mt-1.5">
-                Cet identifiant est déjà réservé.
+              <p className="text-[11px] text-red-500 font-semibold mt-1">
+                Cet identifiant est déjà utilisé.
               </p>
             )}
           </div>
 
           <div>
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-              Nom affiché publiquement *
+              Nom complet ou d’artiste *
             </label>
             <input
               type="text"
@@ -159,7 +169,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               placeholder="Ex: Awa Diop"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
             />
           </div>
 
@@ -169,36 +179,30 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
             </label>
             <textarea
               rows={2}
-              placeholder="Ex: Créateur de tutoriels vidéo et podcasts tech à Bamako..."
+              placeholder="Ex: Créateur de contenu et documentariste basé à Bamako..."
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none transition-all"
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
             />
           </div>
 
           <div className="pt-2">
             <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-              Opérateur Mobile Money de versement *
+              Opérateur Mobile Money de réception *
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-              {(['orange', 'wave', 'moov', 'mtn'] as WalletProvider[]).map((provider) => (
+              {(['orange', 'wave', 'moov', 'mtn'] as WalletProvider[]).map((p) => (
                 <button
-                  key={provider}
+                  key={p}
                   type="button"
-                  onClick={() => setWalletProvider(provider)}
-                  className={`py-2.5 px-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
-                    walletProvider === provider
-                      ? 'bg-orange-500 text-white shadow-sm ring-2 ring-orange-500'
+                  onClick={() => setWalletProvider(p)}
+                  className={`py-2 px-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                    walletProvider === p
+                      ? 'bg-orange-500 text-white shadow-xs ring-2 ring-orange-500'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
                 >
-                  {provider === 'orange'
-                    ? 'Orange'
-                    : provider === 'wave'
-                    ? 'Wave'
-                    : provider === 'moov'
-                    ? 'Moov'
-                    : 'MTN'}
+                  {p}
                 </button>
               ))}
             </div>
@@ -209,10 +213,10 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               placeholder="Ex: +223 70 00 00 00"
               value={walletNumber}
               onChange={(e) => setWalletNumber(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
             />
             <p className="text-[11px] text-gray-400 mt-1">
-              Numéro sur lequel vous recevrez vos fonds lors de vos demandes de retrait.
+              Ce numéro recevra vos versements lors de vos demandes de retrait.
             </p>
           </div>
 
@@ -226,15 +230,18 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
           <button
             type="submit"
             disabled={submitting || checkingUsername || usernameAvailable === false}
-            className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-orange-500/20 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-orange-500/20 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Création de votre page...</span>
+                <span>Création de votre espace...</span>
               </>
             ) : (
-              <span>Lancer ma page créateur</span>
+              <>
+                <span>Accéder à mon tableau de bord</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
             )}
           </button>
         </form>

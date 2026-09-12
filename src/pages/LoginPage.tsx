@@ -1,25 +1,23 @@
 import React, { useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { SignIn, SignUp } from '@clerk/clerk-react'
 import { useAuth } from '../context/AuthContext'
-import { Mail, Lock, Loader2, AlertCircle, Sparkles, CircleCheck } from '../components/Icons'
+import { Mail, User, ArrowRight, AlertCircle, Loader2 } from '../components/Icons'
 
 interface LoginPageProps {
   onNavigate: (path: string) => void
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
-  const { user, creator } = useAuth()
+  const { user, profile, isClerkConfigured, devSignIn } = useAuth()
   const [isSignUp, setIsSignUp] = useState(false)
-  const [useMagicLink, setUseMagicLink] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [devEmail, setDevEmail] = useState('')
+  const [devUsername, setDevUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [magicLinkSent, setMagicLinkSent] = useState(false)
 
-  // Rediriger si deja connecte
+  // Si déjà authentifié, redirection vers dashboard
   if (user) {
-    if (creator) {
+    if (profile?.username) {
       onNavigate('/dashboard')
     } else {
       onNavigate('/onboarding')
@@ -27,43 +25,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     return null
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleDevSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
+    if (!devUsername.trim()) {
+      setError('Veuillez renseigner un pseudo.')
+      return
+    }
+
     setLoading(true)
-
+    setError(null)
     try {
-      if (useMagicLink) {
-        const { error: otpError } = await supabase.auth.signInWithOtp({
-          email: email.trim(),
-          options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
-          },
-        })
-        if (otpError) throw otpError
-        setMagicLinkSent(true)
-      } else if (isSignUp) {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-        })
-        if (signUpError) throw signUpError
-
-        if (data.session) {
-          onNavigate('/onboarding')
-        } else {
-          setMagicLinkSent(true)
-        }
-      } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        })
-        if (signInError) throw signInError
-        onNavigate('/dashboard')
-      }
+      await devSignIn(devEmail.trim(), devUsername.trim())
+      onNavigate('/dashboard')
     } catch (err) {
-      setError((err as Error).message || "Une erreur est survenue lors de l'authentification.")
+      setError((err as Error).message || 'Erreur de connexion')
     } finally {
       setLoading(false)
     }
@@ -71,79 +46,77 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-orange-100/80 shadow-sm p-8">
-        <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-600 to-amber-500 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-4 shadow-sm shadow-orange-500/20">
-            D
-          </div>
-          <h1 className="text-2xl font-extrabold text-gray-950 tracking-tight">
-            {isSignUp ? 'Créer votre compte' : 'Accéder à votre espace'}
-          </h1>
-          <p className="text-sm text-gray-500 mt-1.5">
-            {isSignUp
-              ? 'Rejoignez la plateforme de monétisation pour créateurs'
-              : 'Gérez vos dons et vos versements Mobile Money'}
-          </p>
+      <div className="w-full max-w-md bg-white rounded-3xl border border-orange-100/80 shadow-sm p-6 sm:p-8 text-center">
+        {/* Logo de marque */}
+        <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-4 shadow-sm shadow-orange-500/20">
+          D
         </div>
 
-        {magicLinkSent ? (
-          <div className="text-center py-6 space-y-4">
-            <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-              <CircleCheck className="w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-gray-900">Vérifiez votre boîte e-mail</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">
-              Un lien de connexion sécurisé a été envoyé à <strong>{email}</strong>. Cliquez dessus pour accéder directement à votre compte.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                setMagicLinkSent(false)
-                setUseMagicLink(false)
-              }}
-              className="text-xs text-orange-600 font-bold hover:underline mt-4"
-            >
-              Retour à la connexion standard
-            </button>
+        <h1 className="text-2xl font-extrabold text-gray-950 tracking-tight mb-1.5">
+          {isSignUp ? 'Créer votre compte' : 'Accéder à votre espace'}
+        </h1>
+        <p className="text-xs text-gray-500 mb-6">
+          Plateforme de collecte communautaire par Mobile Money
+        </p>
+
+        {isClerkConfigured ? (
+          // Interface Clerk officielle si la clé est fournie
+          <div className="flex justify-center">
+            {isSignUp ? (
+              <SignUp
+                routing="virtual"
+                afterSignUpUrl="/onboarding"
+                signInUrl="/login"
+              />
+            ) : (
+              <SignIn
+                routing="virtual"
+                afterSignInUrl="/dashboard"
+                signUpUrl="/login"
+              />
+            )}
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          // Formulaire d'authentification pour développement local
+          <form onSubmit={handleDevSubmit} className="space-y-4 text-left">
+            <div className="p-3.5 bg-orange-50/60 border border-orange-200/70 rounded-2xl text-[11px] text-orange-900 leading-relaxed">
+              <span className="font-bold">Mode développement actif :</span> Entrez votre pseudo pour accéder directement au tableau de bord Donkai. En production, Clerk gère l'authentification sécurisée.
+            </div>
+
             <div>
               <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                Adresse e-mail
+                Nom d'utilisateur (Username) *
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: kalifa"
+                  value={devUsername}
+                  onChange={(e) =>
+                    setDevUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
+                  }
+                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                />
+                <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                Adresse email (optionnelle)
               </label>
               <div className="relative">
                 <input
                   type="email"
-                  required
                   placeholder="nom@exemple.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
+                  value={devEmail}
+                  onChange={(e) => setDevEmail(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                 />
                 <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
-
-            {!useMagicLink && (
-              <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
-                  Mot de passe
-                </label>
-                <div className="relative">
-                  <input
-                    type="password"
-                    required
-                    minLength={6}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none transition-all"
-                  />
-                  <Lock className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                </div>
-              </div>
-            )}
 
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-medium flex items-center gap-2">
@@ -155,49 +128,34 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-orange-500/20 transition-all text-sm flex items-center justify-center gap-2"
+              className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl shadow-md shadow-orange-500/20 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Traitement en cours...</span>
+                  <span>Connexion en cours...</span>
                 </>
-              ) : useMagicLink ? (
-                <span>Envoyer le lien magique</span>
-              ) : isSignUp ? (
-                <span>Créer mon compte</span>
               ) : (
-                <span>Se connecter</span>
+                <>
+                  <span>Entrer dans l'espace créateur</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
               )}
             </button>
-
-            <div className="pt-2 flex flex-col items-center gap-3 text-xs">
-              <button
-                type="button"
-                onClick={() => setUseMagicLink(!useMagicLink)}
-                className="text-gray-500 hover:text-orange-600 flex items-center gap-1 font-semibold"
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                <span>
-                  {useMagicLink ? 'Utiliser un mot de passe' : 'Connexion sans mot de passe (Magic Link)'}
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setIsSignUp(!isSignUp)
-                  setError(null)
-                }}
-                className="text-gray-700 font-bold hover:underline"
-              >
-                {isSignUp
-                  ? 'Déjà un compte ? Connectez-vous'
-                  : "Vous n'avez pas de compte ? Inscrivez-vous"}
-              </button>
-            </div>
           </form>
         )}
+
+        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+          <button
+            type="button"
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-xs text-gray-600 hover:text-orange-600 font-bold underline cursor-pointer"
+          >
+            {isSignUp
+              ? 'Déjà un compte ? Connectez-vous'
+              : 'Nouveau sur Donkai ? Créer un compte'}
+          </button>
+        </div>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-// Supabase Edge Function — saspay-webhook (HMAC verified)
+// Supabase Edge Function — saspay-webhook (HMAC verified & Idempotence)
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const SASPAY_WEBHOOK_SECRET = Deno.env.get('SASPAY_WEBHOOK_SECRET') || ''
@@ -15,7 +15,6 @@ async function verifySignature(
   const now = Math.floor(Date.now() / 1000)
   const timestamp = Number(timestampHeader)
 
-  // Rejet si le timestamp differe de plus de 5 minutes
   if (isNaN(timestamp) || Math.abs(now - timestamp) > TOLERANCE_SECONDS) {
     return false
   }
@@ -49,11 +48,10 @@ Deno.serve(async (req) => {
     const timestamp = req.headers.get('x-webhook-timestamp') || ''
     const eventType = req.headers.get('x-webhook-event') || ''
 
-    // Verifier la signature cryptographique si le secret est renseigne
     if (SASPAY_WEBHOOK_SECRET) {
       const isValid = await verifySignature(rawBody, signature, timestamp, SASPAY_WEBHOOK_SECRET)
       if (!isValid) {
-        return new Response(JSON.stringify({ error: 'Signature ou timestamp invalide' }), {
+        return new Response(JSON.stringify({ error: 'Signature ou horodatage invalide' }), {
           status: 403,
           headers: { 'Content-Type': 'application/json' },
         })
@@ -69,30 +67,49 @@ Deno.serve(async (req) => {
     const transactionId = data?.id
 
     if (event === 'transaction.success') {
-      let query = supabase.from('donations').update({
-        status: 'paid',
-        saspay_transaction_id: transactionId || null,
-      })
+      // 1. Récupérer la donation pour vérifier qu'elle n'est pas déjà payée (idempotence)
+      const { data: donation } = await supabase
+        .from('donations')
+        .select('id, campaign_id, net_amount, status')
+        .eq('id', donationId)
+        .single()
 
-      if (donationId) {
-        query = query.eq('id', donationId)
-      } else if (transactionId) {
-        query = query.eq('saspay_transaction_id', transactionId)
+      if (donation && donation.status !== 'paid') {
+        // Mettre à jour le don à "paid"
+        await supabase
+          .from('donations')
+          .update({
+            status: 'paid',
+            payment_transaction_id: transactionId || null,
+            paid_at: new Date().toISOString(),
+          })
+          .eq('id', donation.id)
+
+        // Incrémenter le total collecté de la campagne
+        const { data: campaign } = await supabase
+          .from('campaigns')
+          .select('collected_amount, contributions_count')
+          .eq('id', donation.campaign_id)
+          .single()
+
+        if (campaign) {
+          await supabase
+            .from('campaigns')
+            .update({
+              collected_amount: campaign.collected_amount + donation.net_amount,
+              contributions_count: campaign.contributions_count + 1,
+            })
+            .eq('id', donation.campaign_id)
+        }
       }
-
-      await query
     } else if (event === 'transaction.failed' || event === 'transaction.cancelled') {
-      let query = supabase.from('donations').update({
-        status: 'failed',
-      })
-
-      if (donationId) {
-        query = query.eq('id', donationId)
-      } else if (transactionId) {
-        query = query.eq('saspay_transaction_id', transactionId)
-      }
-
-      await query
+      await supabase
+        .from('donations')
+        .update({
+          status: 'failed',
+          payment_transaction_id: transactionId || null,
+        })
+        .eq('id', donationId)
     }
 
     return new Response(JSON.stringify({ received: true }), {
