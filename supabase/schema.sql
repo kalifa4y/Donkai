@@ -2,6 +2,16 @@
 -- DONKAI — Database Schema (Supabase PostgreSQL + Clerk ID)
 -- ========================================================
 
+-- 0. Nettoyage préventif des tables de l'ancien prototype (creators, donations avec creator_id)
+DROP TABLE IF EXISTS audit_logs CASCADE;
+DROP TABLE IF EXISTS verification_records CASCADE;
+DROP TABLE IF EXISTS reports CASCADE;
+DROP TABLE IF EXISTS payouts CASCADE;
+DROP TABLE IF EXISTS donations CASCADE;
+DROP TABLE IF EXISTS campaigns CASCADE;
+DROP TABLE IF EXISTS profiles CASCADE;
+DROP TABLE IF EXISTS creators CASCADE;
+
 -- 1. Table des profils utilisateurs (Liée à l'identifiant Clerk)
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
