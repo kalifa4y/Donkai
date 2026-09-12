@@ -112,26 +112,26 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
 
   return (
     <div className="min-h-[85vh] flex items-center justify-center px-4 py-12 text-left">
-      <div className="w-full max-w-lg bg-white rounded-3xl border border-orange-100/80 shadow-sm p-6 sm:p-8">
+      <div className="w-full max-w-lg bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-sm p-6 sm:p-8">
         <div className="text-center mb-6">
-          <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center text-xl font-extrabold mx-auto mb-3">
+          <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center text-xl font-extrabold mx-auto mb-3">
             <Smartphone className="w-6 h-6" />
           </div>
-          <h1 className="text-2xl font-extrabold text-gray-950 tracking-tight">
+          <h1 className="text-2xl font-extrabold text-gray-950 dark:text-white tracking-tight">
             Finalisez votre profil DONKAI
           </h1>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
             Définissez votre lien public et le numéro Mobile Money qui recevra vos fonds.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Identifiant unique (Username) *
             </label>
-            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500">
-              <span className="px-3.5 py-3 text-xs font-semibold text-gray-400 bg-gray-50 border-r border-gray-200">
+            <div className="flex items-center border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500">
+              <span className="px-3.5 py-3 text-xs font-semibold text-gray-400 dark:text-zinc-500 bg-gray-50 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-800">
                 donkai.app/@
               </span>
               <input
@@ -140,27 +140,27 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
                 placeholder="pseudo"
                 value={username}
                 onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                className="flex-1 px-3 py-3 text-xs font-bold outline-none text-gray-900"
+                className="flex-1 px-3 py-3 text-xs font-bold outline-none text-gray-900 dark:text-white bg-white dark:bg-zinc-800/80"
               />
             </div>
             {checkingUsername && (
-              <p className="text-[11px] text-gray-400 mt-1">Vérification de la disponibilité...</p>
+              <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">Vérification de la disponibilité...</p>
             )}
             {usernameAvailable === true && (
-              <p className="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
+              <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1 flex items-center gap-1">
                 <Check className="w-3.5 h-3.5" />
                 <span>Identifiant disponible !</span>
               </p>
             )}
             {usernameAvailable === false && (
-              <p className="text-[11px] text-red-500 font-semibold mt-1">
+              <p className="text-[11px] text-red-500 dark:text-red-400 font-semibold mt-1">
                 Cet identifiant est déjà utilisé.
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Nom complet ou d’artiste *
             </label>
             <input
@@ -169,12 +169,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               placeholder="Ex: Awa Diop"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Bio / Présentation courte
             </label>
             <textarea
@@ -182,12 +182,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               placeholder="Ex: Créateur de contenu et documentariste basé à Bamako..."
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
+              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none"
             />
           </div>
 
           <div className="pt-2">
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-2">
               Opérateur Mobile Money de réception *
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
@@ -199,7 +199,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
                   className={`py-2 px-2.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
                     walletProvider === p
                       ? 'bg-orange-500 text-white shadow-xs ring-2 ring-orange-500'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700'
                   }`}
                 >
                   {p}
@@ -213,15 +213,15 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               placeholder="Ex: +223 70 00 00 00"
               value={walletNumber}
               onChange={(e) => setWalletNumber(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs font-bold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
             />
-            <p className="text-[11px] text-gray-400 mt-1">
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
               Ce numéro recevra vos versements lors de vos demandes de retrait.
             </p>
           </div>
 
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-medium flex items-center gap-2">
+            <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-xl text-xs font-medium flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
               <span>{error}</span>
             </div>
