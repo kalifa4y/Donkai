@@ -22,7 +22,34 @@ export const App: React.FC = () => {
     }
 
     window.addEventListener('popstate', handlePopState)
-    return () => window.removeEventListener('popstate', handlePopState)
+
+    // Écoute dynamique et automatique des préférences de thème du système d'exploitation
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const handleThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+      if (e.matches) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
+    }
+
+    // Synchronisation immédiate
+    handleThemeChange(mediaQuery)
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleThemeChange)
+    } else {
+      mediaQuery.addListener(handleThemeChange)
+    }
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState)
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleThemeChange)
+      } else {
+        mediaQuery.removeListener(handleThemeChange)
+      }
+    }
   }, [])
 
   const navigate = (path: string) => {
@@ -87,7 +114,7 @@ export const App: React.FC = () => {
   return (
     <I18nProvider>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-[#faf9f6]">
+        <div className="min-h-screen flex flex-col bg-[#faf9f6] dark:bg-[#0c0d12] text-gray-900 dark:text-zinc-100 transition-colors duration-200">
           <Navbar onNavigate={navigate} />
           <main className="flex-1">{renderRoute()}</main>
           <Footer onNavigate={navigate} />

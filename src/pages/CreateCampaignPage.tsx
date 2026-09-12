@@ -176,27 +176,27 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8 text-left">
       <div>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 text-orange-700 border border-orange-200/60 text-xs font-bold mb-3">
-          <Target className="w-3.5 h-3.5 text-orange-600" />
+        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200/60 dark:border-orange-900/50 text-xs font-bold mb-3">
+          <Target className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
           <span>Nouvelle collecte d'objectifs</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-950 tracking-tight">
+        <h1 className="text-3xl font-extrabold text-gray-950 dark:text-white tracking-tight">
           Lancez votre collecte
         </h1>
-        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
           Définissez votre projet, votre objectif et commencez à recevoir le soutien direct de votre communauté.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Titre & Slug */}
-        <div className="bg-white p-6 sm:p-7 rounded-3xl border border-orange-100/80 shadow-xs space-y-4">
-          <h2 className="text-base font-extrabold text-gray-950 pb-2 border-b border-gray-100">
+        <div className="bg-white dark:bg-[#12141f] p-6 sm:p-7 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-4">
+          <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
             1. Présentation de la collecte
           </h2>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Titre clair de votre objectif *
             </label>
             <input
@@ -205,16 +205,16 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               placeholder="Ex: Financement d’un forage d’eau potable pour Gao"
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Lien dédié de votre collecte (URL) *
             </label>
-            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden text-xs font-mono bg-gray-50">
-              <span className="px-3 py-3 text-gray-500 border-r border-gray-200 shrink-0">
+            <div className="flex items-center border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden text-xs font-mono bg-gray-50 dark:bg-zinc-900">
+              <span className="px-3 py-3 text-gray-500 dark:text-zinc-400 border-r border-gray-200 dark:border-zinc-800 shrink-0">
                 donkai.app/@{profile?.username || 'votre-nom'}/
               </span>
               <input
@@ -222,16 +222,16 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                 required
                 value={slug}
                 onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                className="flex-1 bg-white px-3 py-3 text-gray-900 font-bold outline-none"
+                className="flex-1 bg-white dark:bg-zinc-800 px-3 py-3 text-gray-900 dark:text-white font-bold outline-none"
               />
             </div>
-            <p className="text-[11px] text-gray-400 mt-1">
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
               Cette URL unique sera partagée sur vos réseaux sociaux (TikTok, WhatsApp, etc.).
             </p>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
               Description complète de votre projet *
             </label>
             <textarea
@@ -240,20 +240,20 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               placeholder="Expliquez pourquoi ce projet est important, comment les fonds seront utilisés, et quel sera l’impact..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-xs sm:text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none leading-relaxed"
+              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs sm:text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none leading-relaxed"
             />
           </div>
         </div>
 
         {/* Objectif & Durée */}
-        <div className="bg-white p-6 sm:p-7 rounded-3xl border border-orange-100/80 shadow-xs space-y-4">
-          <h2 className="text-base font-extrabold text-gray-950 pb-2 border-b border-gray-100">
+        <div className="bg-white dark:bg-[#12141f] p-6 sm:p-7 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-4">
+          <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
             2. Objectif financier & Calendrier
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                 Montant recherché (FCFA) *
               </label>
               <div className="relative">
@@ -264,16 +264,16 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                   required
                   value={goalAmount}
                   onChange={(e) => setGoalAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                 />
-                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-zinc-500">
                   FCFA
                 </span>
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                 Date de fin (max. 2 ans) *
               </label>
               <input
@@ -281,17 +281,17 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                 required
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
               />
             </div>
           </div>
 
-          {/* Frais Donkai affichés clairement à la création selon section 6 du prompt */}
-          <div className="p-4 bg-orange-50/60 border border-orange-200/70 rounded-2xl flex items-start gap-3">
-            <Info className="w-4 h-4 text-orange-600 shrink-0 mt-0.5" />
-            <div className="text-xs text-orange-900 space-y-1">
+          {/* Frais Donkai affichés clairement à la création */}
+          <div className="p-4 bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200/70 dark:border-orange-900/50 rounded-2xl flex items-start gap-3">
+            <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+            <div className="text-xs text-orange-900 dark:text-orange-300 space-y-1">
               <p className="font-bold">Tarification transparente validée :</p>
-              <p>
+              <p className="text-orange-800 dark:text-orange-300/90">
                 <strong>5 % + 100 FCFA</strong> sont prélevés par contribution et déduits du montant reçu par le bénéficiaire. <strong>Aucun frais supplémentaire</strong> n'est appliqué lors du retrait des fonds.
               </p>
             </div>
@@ -299,8 +299,8 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
         </div>
 
         {/* Choix du bénéficiaire */}
-        <div className="bg-white p-6 sm:p-7 rounded-3xl border border-orange-100/80 shadow-xs space-y-4">
-          <h2 className="text-base font-extrabold text-gray-950 pb-2 border-b border-gray-100">
+        <div className="bg-white dark:bg-[#12141f] p-6 sm:p-7 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-4">
+          <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
             3. Bénéficiaire des fonds
           </h2>
 
@@ -310,13 +310,13 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               onClick={() => setBeneficiaryType('self')}
               className={`p-4 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                 beneficiaryType === 'self'
-                  ? 'border-orange-500 bg-orange-50/50 text-orange-950 ring-2 ring-orange-500'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-gray-50/50'
+                  ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/40 text-orange-950 dark:text-orange-200 ring-2 ring-orange-500'
+                  : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 text-gray-700 dark:text-zinc-300 bg-gray-50/50 dark:bg-zinc-900/50'
               }`}
             >
-              <ShieldCheck className="w-5 h-5 text-orange-600" />
+              <ShieldCheck className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               <span>Pour moi-même</span>
-              <span className="text-[10px] text-gray-500 font-normal">Vous recevrez les fonds</span>
+              <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-normal">Vous recevrez les fonds</span>
             </button>
 
             <button
@@ -324,24 +324,24 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               onClick={() => setBeneficiaryType('other')}
               className={`p-4 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
                 beneficiaryType === 'other'
-                  ? 'border-orange-500 bg-orange-50/50 text-orange-950 ring-2 ring-orange-500'
-                  : 'border-gray-200 hover:border-gray-300 text-gray-700 bg-gray-50/50'
+                  ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/40 text-orange-950 dark:text-orange-200 ring-2 ring-orange-500'
+                  : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 text-gray-700 dark:text-zinc-300 bg-gray-50/50 dark:bg-zinc-900/50'
               }`}
             >
-              <Users className="w-5 h-5 text-orange-600" />
+              <Users className="w-5 h-5 text-orange-600 dark:text-orange-400" />
               <span>Pour un tiers / Association</span>
-              <span className="text-[10px] text-gray-500 font-normal">Fonds versés au bénéficiaire</span>
+              <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-normal">Fonds versés au bénéficiaire</span>
             </button>
           </div>
 
           {beneficiaryType === 'other' && (
             <div className="space-y-3 pt-2">
-              <div className="p-3.5 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-900 leading-relaxed">
+              <div className="p-3.5 bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-xl text-xs text-blue-900 dark:text-blue-300 leading-relaxed">
                 Une invitation sera transmise au bénéficiaire pour revendiquer et vérifier ses informations de réception. En tant qu'organisateur, vous ne pourrez pas détourner les fonds qui lui sont destinés.
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
                   Nom complet du bénéficiaire ou de l’organisation *
                 </label>
                 <input
@@ -350,13 +350,13 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                   placeholder="Ex: Association Solidarité Tombouctou"
                   value={beneficiaryName}
                   onChange={(e) => setBeneficiaryName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
                     Numéro de téléphone Mobile Money *
                   </label>
                   <input
@@ -365,12 +365,12 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                     placeholder="+223 70 00 00 00"
                     value={beneficiaryPhone}
                     onChange={(e) => setBeneficiaryPhone(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
                     Adresse email du bénéficiaire
                   </label>
                   <input
@@ -378,7 +378,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                     placeholder="contact@association.org"
                     value={beneficiaryEmail}
                     onChange={(e) => setBeneficiaryEmail(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl px-3.5 py-2.5 text-xs focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   />
                 </div>
               </div>
@@ -387,7 +387,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-xs font-medium flex items-center gap-2">
+          <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-2xl text-xs font-medium flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
             <span>{error}</span>
           </div>

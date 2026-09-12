@@ -16,7 +16,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
   }
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-colors">
+    <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0c0d12]/95 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800 transition-colors">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Brand Logo */}
         <div className="flex items-center gap-6">
@@ -29,25 +29,25 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
               <span className="font-heading font-bold text-lg tracking-tighter">D</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-heading font-bold text-xl tracking-tight text-gray-950 group-hover:text-orange-600 transition-colors">
+              <span className="font-heading font-bold text-xl tracking-tight text-gray-950 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors">
                 DONKAI
               </span>
             </div>
           </button>
 
           {/* Navigation links desktop */}
-          <nav className="hidden md:flex items-center gap-1 text-xs font-bold text-gray-600">
+          <nav className="hidden md:flex items-center gap-1 text-xs font-bold text-gray-600 dark:text-zinc-400">
             <button
               type="button"
               onClick={() => onNavigate('/')}
-              className="px-3 py-1.5 rounded-lg hover:text-gray-950 hover:bg-gray-50 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg hover:text-gray-950 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
             >
               {t('nav.home')}
             </button>
             <button
               type="button"
               onClick={() => onNavigate('/create')}
-              className="px-3 py-1.5 rounded-lg hover:text-gray-950 hover:bg-gray-50 transition-colors cursor-pointer"
+              className="px-3 py-1.5 rounded-lg hover:text-gray-950 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer"
             >
               {t('nav.create')}
             </button>
@@ -61,9 +61,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
             type="button"
             onClick={toggleLanguage}
             title={language === 'fr' ? 'Switch to English' : 'Passer en Français'}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
           >
-            <Globe className="w-3.5 h-3.5 text-gray-500" />
+            <Globe className="w-3.5 h-3.5 text-gray-500 dark:text-zinc-400" />
             <span className="uppercase">{language}</span>
           </button>
 
@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
               <button
                 type="button"
                 onClick={() => onNavigate('/create')}
-                className="hidden sm:inline-flex items-center gap-1.5 bg-orange-50 text-orange-700 hover:bg-orange-100 text-xs font-bold px-3 py-2 rounded-xl transition-colors cursor-pointer"
+                className="hidden sm:inline-flex items-center gap-1.5 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 hover:bg-orange-100 dark:hover:bg-orange-900/50 text-xs font-bold px-3 py-2 rounded-xl transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Nouvelle collecte</span>
@@ -81,9 +81,9 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
               <button
                 type="button"
                 onClick={() => onNavigate('/dashboard')}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-gray-800 dark:text-zinc-200 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl transition-colors cursor-pointer"
               >
-                <Wallet className="w-3.5 h-3.5 text-orange-600" />
+                <Wallet className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
                 <span>{t('nav.dashboard')}</span>
               </button>
 
@@ -94,7 +94,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
                   onNavigate('/')
                 }}
                 title={t('nav.logout')}
-                className="p-2 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+                className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>
@@ -104,7 +104,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
               <button
                 type="button"
                 onClick={() => onNavigate('/login')}
-                className="px-3.5 py-2 text-xs font-bold text-gray-700 hover:text-gray-950 transition-colors cursor-pointer"
+                className="px-3.5 py-2 text-xs font-bold text-gray-700 dark:text-zinc-300 hover:text-gray-950 dark:hover:text-white transition-colors cursor-pointer"
               >
                 {t('nav.login')}
               </button>

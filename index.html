@@ -108,8 +108,18 @@
       href="https://fonts.googleapis.com/css2?family=Google+Sans+Flex:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <!-- Détection et synchronisation automatique immédiate du thème système (Dark / Light) -->
+    <script>
+      (function() {
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      })();
+    </script>
   </head>
-  <body class="bg-[#faf9f6] text-gray-900 antialiased font-sans">
+  <body class="bg-[#faf9f6] dark:bg-[#0c0d12] text-gray-900 dark:text-zinc-100 antialiased font-sans transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

@@ -46,16 +46,16 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md bg-white rounded-3xl border border-orange-100/80 shadow-sm p-6 sm:p-8 text-center">
+      <div className="w-full max-w-md bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-sm p-6 sm:p-8 text-center">
         {/* Logo de marque */}
         <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center text-xl font-heading font-bold mx-auto mb-4 shadow-sm shadow-orange-500/20">
           D
         </div>
 
-        <h1 className="text-2xl font-extrabold text-gray-950 tracking-tight mb-1.5">
+        <h1 className="text-2xl font-extrabold text-gray-950 dark:text-white tracking-tight mb-1.5">
           {isSignUp ? 'Créer votre compte' : 'Accéder à votre espace'}
         </h1>
-        <p className="text-xs text-gray-500 mb-6">
+        <p className="text-xs text-gray-500 dark:text-zinc-400 mb-6">
           Plateforme de collecte communautaire par Mobile Money
         </p>
 
@@ -79,12 +79,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
         ) : (
           // Formulaire d'authentification pour développement local
           <form onSubmit={handleDevSubmit} className="space-y-4 text-left">
-            <div className="p-3.5 bg-orange-50/60 border border-orange-200/70 rounded-2xl text-[11px] text-orange-900 leading-relaxed">
+            <div className="p-3.5 bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200/70 dark:border-orange-900/50 rounded-2xl text-[11px] text-orange-900 dark:text-orange-300 leading-relaxed">
               <span className="font-bold">Mode développement actif :</span> Entrez votre pseudo pour accéder directement au tableau de bord Donkai. En production, Clerk gère l'authentification sécurisée.
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                 Nom d'utilisateur (Username) *
               </label>
               <div className="relative">
@@ -96,14 +96,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   onChange={(e) =>
                     setDevUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))
                   }
-                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                 />
-                <User className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <User className="w-4 h-4 text-gray-400 dark:text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                 Adresse email (optionnelle)
               </label>
               <div className="relative">
@@ -112,14 +112,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                   placeholder="nom@exemple.com"
                   value={devEmail}
                   onChange={(e) => setDevEmail(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl pl-10 pr-4 py-3 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                 />
-                <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-gray-400 dark:text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-medium flex items-center gap-2">
+              <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-xl text-xs font-medium flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -145,11 +145,11 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           </form>
         )}
 
-        <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+        <div className="mt-6 pt-4 border-t border-gray-100 dark:border-zinc-800 text-center">
           <button
             type="button"
             onClick={() => setIsSignUp(!isSignUp)}
-            className="text-xs text-gray-600 hover:text-orange-600 font-bold underline cursor-pointer"
+            className="text-xs text-gray-600 dark:text-zinc-400 hover:text-orange-600 dark:hover:text-orange-400 font-bold underline cursor-pointer"
           >
             {isSignUp
               ? 'Déjà un compte ? Connectez-vous'

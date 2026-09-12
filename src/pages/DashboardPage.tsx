@@ -217,24 +217,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8 text-left">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8 text-left transition-colors">
       {/* En-tête Organisateur */}
-      <div className="bg-white rounded-3xl border border-orange-100/80 shadow-xs p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-extrabold text-gray-950 tracking-tight">
+            <h1 className="text-2xl font-extrabold text-gray-950 dark:text-white tracking-tight font-heading">
               Tableau de bord
             </h1>
             {profile?.verification_status === 'verified' && (
-              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 <span>Vérifié</span>
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-zinc-400">
             Compte de réception :{' '}
-            <strong className="text-gray-800 uppercase font-bold">
+            <strong className="text-gray-800 dark:text-zinc-200 uppercase font-bold">
               {profile?.wallet_provider || 'Orange'} ({profile?.wallet_number || 'Non configuré'})
             </strong>
           </p>
@@ -252,7 +252,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           <button
             type="button"
             onClick={() => onNavigate('/settings')}
-            className="inline-flex items-center gap-1.5 bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold py-2.5 px-3.5 rounded-xl border border-gray-200 transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold py-2.5 px-3.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors cursor-pointer"
           >
             <span>Paramètres</span>
           </button>
@@ -261,8 +261,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* Alerte de sécurité verrouillage 30 jours (Section 19 du master prompt) */}
       {!walletUpdateStatus.allowed && (
-        <div className="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-start gap-3 text-xs text-amber-900">
-          <Lock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-2xl flex items-start gap-3 text-xs text-amber-900 dark:text-amber-200">
+          <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
           <div>
             <p className="font-bold">Protection anti-fraude active</p>
             <p className="mt-0.5">
@@ -274,9 +274,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* Alerte KYC seuil 500 000 FCFA (Section 20 du master prompt) */}
       {isKycRequired && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start justify-between gap-3 text-xs text-blue-900">
+        <div className="p-4 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-2xl flex items-start justify-between gap-3 text-xs text-blue-900 dark:text-blue-200">
           <div className="flex items-start gap-2.5">
-            <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-bold">Vérification d’identité recommandée (Palier 500 000 FCFA)</p>
               <p className="mt-0.5">
@@ -297,12 +297,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       {/* Cartes métriques financières */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Solde disponible */}
-        <div className="bg-white p-6 rounded-3xl border border-orange-100/80 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold uppercase tracking-wider">
+        <div className="bg-white dark:bg-[#12141f] p-6 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
             <span>Solde disponible</span>
-            <Coins className="w-4 h-4 text-orange-600" />
+            <Coins className="w-4 h-4 text-orange-600 dark:text-orange-400" />
           </div>
-          <p className="text-2xl font-heading font-extrabold text-gray-950">
+          <p className="text-2xl font-heading font-extrabold text-gray-950 dark:text-white">
             {availableBalance.toLocaleString()} FCFA
           </p>
           <button
@@ -312,7 +312,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               setPayoutModalOpen(true)
             }}
             disabled={availableBalance < 5000}
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-100 disabled:text-gray-400 text-white text-xs font-bold py-2 px-3 rounded-xl transition-all cursor-pointer disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-100 dark:disabled:bg-zinc-800 disabled:text-gray-400 dark:disabled:text-zinc-600 text-white text-xs font-bold py-2 px-3 rounded-xl transition-all cursor-pointer disabled:cursor-not-allowed"
           >
             <ArrowUpRight className="w-3.5 h-3.5" />
             <span>Demander un retrait</span>
@@ -320,63 +320,63 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Total collecté net */}
-        <div className="bg-white p-6 rounded-3xl border border-orange-100/80 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold uppercase tracking-wider">
+        <div className="bg-white dark:bg-[#12141f] p-6 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
             <span>Total collecté (net)</span>
-            <TrendingUp className="w-4 h-4 text-emerald-600" />
+            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <p className="text-2xl font-heading font-extrabold text-emerald-600">
+          <p className="text-2xl font-heading font-extrabold text-emerald-600 dark:text-emerald-400">
             {totalRaisedNet.toLocaleString()} FCFA
           </p>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-400 dark:text-zinc-500">
             Après déduction des frais (5% + 100 FCFA)
           </p>
         </div>
 
         {/* Déjà retiré */}
-        <div className="bg-white p-6 rounded-3xl border border-orange-100/80 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold uppercase tracking-wider">
+        <div className="bg-white dark:bg-[#12141f] p-6 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
             <span>Déjà retiré</span>
-            <Wallet className="w-4 h-4 text-blue-600" />
+            <Wallet className="w-4 h-4 text-blue-600 dark:text-blue-400" />
           </div>
-          <p className="text-2xl font-heading font-extrabold text-gray-950">
+          <p className="text-2xl font-heading font-extrabold text-gray-950 dark:text-white">
             {totalPaidOut.toLocaleString()} FCFA
           </p>
           {pendingPayouts > 0 ? (
-            <p className="text-[11px] text-amber-600 font-bold flex items-center gap-1">
+            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
               <Clock className="w-3 h-3" />
               <span>{pendingPayouts.toLocaleString()} FCFA en traitement</span>
             </p>
           ) : (
-            <p className="text-[11px] text-gray-400">Versements Mobile Money validés</p>
+            <p className="text-[11px] text-gray-400 dark:text-zinc-500">Versements Mobile Money validés</p>
           )}
         </div>
 
         {/* Soutiens & Moyenne */}
-        <div className="bg-white p-6 rounded-3xl border border-orange-100/80 shadow-xs space-y-2">
-          <div className="flex items-center justify-between text-gray-500 text-xs font-bold uppercase tracking-wider">
+        <div className="bg-white dark:bg-[#12141f] p-6 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-2">
+          <div className="flex items-center justify-between text-gray-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-wider">
             <span>Contributions</span>
-            <Users className="w-4 h-4 text-gray-700" />
+            <Users className="w-4 h-4 text-gray-700 dark:text-zinc-300" />
           </div>
-          <p className="text-2xl font-heading font-extrabold text-gray-950">
+          <p className="text-2xl font-heading font-extrabold text-gray-950 dark:text-white">
             {totalDonorsCount}
           </p>
-          <p className="text-[11px] text-gray-400">
+          <p className="text-[11px] text-gray-400 dark:text-zinc-500">
             Moyenne : {averageDonation.toLocaleString()} FCFA / don
           </p>
         </div>
       </div>
 
       {/* Onglets : Collectes / Dons reçus / Historique Retraits */}
-      <div className="bg-white rounded-3xl border border-orange-100/80 shadow-xs overflow-hidden">
-        <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 text-xs font-bold">
+      <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs overflow-hidden">
+        <div className="flex border-b border-gray-100 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-900/60 p-2 gap-2 text-xs font-bold">
           <button
             type="button"
             onClick={() => setActiveTab('campaigns')}
             className={`flex-1 py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
               activeTab === 'campaigns'
-                ? 'bg-white text-orange-600 shadow-2xs'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-white dark:bg-[#1a1d2c] text-orange-600 dark:text-orange-400 shadow-2xs'
+                : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             Mes collectes ({campaigns.length})
@@ -386,8 +386,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             onClick={() => setActiveTab('donations')}
             className={`flex-1 py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
               activeTab === 'donations'
-                ? 'bg-white text-orange-600 shadow-2xs'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-white dark:bg-[#1a1d2c] text-orange-600 dark:text-orange-400 shadow-2xs'
+                : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             Contributions reçues ({donations.length})
@@ -397,8 +397,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             onClick={() => setActiveTab('payouts')}
             className={`flex-1 py-2.5 px-3 rounded-xl transition-all cursor-pointer ${
               activeTab === 'payouts'
-                ? 'bg-white text-orange-600 shadow-2xs'
-                : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-white dark:bg-[#1a1d2c] text-orange-600 dark:text-orange-400 shadow-2xs'
+                : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
             Historique des retraits ({payouts.length})
@@ -410,7 +410,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {activeTab === 'campaigns' && (
             <div>
               {campaigns.length === 0 ? (
-                <div className="text-center py-12 space-y-3 text-gray-400">
+                <div className="text-center py-12 space-y-3 text-gray-400 dark:text-zinc-500">
                   <p className="text-sm font-medium">Vous n'avez encore créé aucune collecte.</p>
                   <button
                     type="button"
@@ -422,7 +422,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   </button>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
                   {campaigns.map((c) => {
                     const pct = Math.min(100, Math.round((c.collected_amount / c.goal_amount) * 100))
                     const campaignUrl = `/@${profile?.username || 'user'}/${c.slug}`
@@ -431,17 +431,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                       <div key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 first:pt-0 last:pb-0">
                         <div className="space-y-1.5 max-w-md">
                           <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-extrabold text-gray-900">
+                            <h4 className="text-sm font-extrabold text-gray-900 dark:text-white">
                               {c.title}
                             </h4>
-                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
                               {c.status === 'active' ? 'Active' : c.status}
                             </span>
                           </div>
 
-                          <div className="flex items-center gap-3 text-xs text-gray-500">
+                          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
                             <span>
-                              <strong className="text-gray-800">{c.collected_amount.toLocaleString()} FCFA</strong> / {c.goal_amount.toLocaleString()} FCFA ({pct}%)
+                              <strong className="text-gray-800 dark:text-zinc-200">{c.collected_amount.toLocaleString()} FCFA</strong> / {c.goal_amount.toLocaleString()} FCFA ({pct}%)
                             </span>
                             <span>•</span>
                             <span>{c.contributions_count} soutiens</span>
@@ -452,10 +452,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           <button
                             type="button"
                             onClick={() => handleCopyLink(campaignUrl)}
-                            className="bg-gray-50 hover:bg-gray-100 text-gray-700 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200 transition-colors flex items-center gap-1 cursor-pointer"
+                            className="bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             {copiedLink === campaignUrl ? (
-                              <Check className="w-3 h-3 text-emerald-600" />
+                              <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                             ) : (
                               <Copy className="w-3 h-3" />
                             )}
@@ -465,7 +465,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           <button
                             type="button"
                             onClick={() => onNavigate(campaignUrl)}
-                            className="bg-orange-50 hover:bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                            className="bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
                           >
                             <ExternalLink className="w-3 h-3" />
                             <span>Voir</span>
@@ -483,24 +483,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {activeTab === 'donations' && (
             <div>
               {donations.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 text-xs">
+                <div className="text-center py-12 text-gray-400 dark:text-zinc-500 text-xs">
                   Aucune contribution reçue pour le moment. Partagez votre lien de collecte.
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
                   {donations.map((d) => (
                     <div key={d.id} className="py-4 flex items-center justify-between first:pt-0 last:pb-0 text-xs">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-900 text-sm">
+                          <span className="font-bold text-gray-900 dark:text-white text-sm">
                             {d.is_anonymous ? 'Contributeur anonyme' : (d.donor_name || 'Anonyme')}
                           </span>
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
                             {d.status === 'paid' ? 'Validé' : d.status}
                           </span>
                         </div>
-                        {d.message && <p className="text-gray-600 italic">"{d.message}"</p>}
-                        <p className="text-[10px] text-gray-400 mt-1">
+                        {d.message && <p className="text-gray-600 dark:text-zinc-300 italic">"{d.message}"</p>}
+                        <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-1">
                           {new Date(d.created_at).toLocaleDateString('fr-FR', {
                             day: 'numeric',
                             month: 'long',
@@ -511,10 +511,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm font-extrabold text-emerald-600">
+                        <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
                           +{d.net_amount.toLocaleString()} FCFA net
                         </p>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-[10px] text-gray-400 dark:text-zinc-500">
                           Brut : {d.amount.toLocaleString()} FCFA (Frais : {d.fee.toLocaleString()} FCFA)
                         </p>
                       </div>
@@ -529,28 +529,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {activeTab === 'payouts' && (
             <div>
               {payouts.length === 0 ? (
-                <div className="text-center py-12 text-gray-400 text-xs">
+                <div className="text-center py-12 text-gray-400 dark:text-zinc-500 text-xs">
                   Aucun versement demandé. Dès 5 000 FCFA disponibles, vous pouvez déclencher un retrait.
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100">
+                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
                   {payouts.map((p) => (
                     <div key={p.id} className="py-4 flex items-center justify-between first:pt-0 last:pb-0 text-xs">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-900">
+                          <span className="font-bold text-gray-900 dark:text-white">
                             Vers {p.wallet_provider.toUpperCase()} ({p.wallet_number})
                           </span>
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">
+                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/50">
                             {p.status === 'completed' ? 'Effectué' : p.status === 'under_review' ? 'En revue de conformité' : 'En cours'}
                           </span>
                         </div>
-                        <p className="text-[10px] text-gray-400">
+                        <p className="text-[10px] text-gray-400 dark:text-zinc-500">
                           Demandé le {new Date(p.created_at).toLocaleDateString('fr-FR')}
                         </p>
                       </div>
 
-                      <p className="text-sm font-extrabold text-gray-950">
+                      <p className="text-sm font-extrabold text-gray-950 dark:text-white">
                         {p.amount.toLocaleString()} FCFA
                       </p>
                     </div>
@@ -565,11 +565,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       {/* Modal Demande de Retrait */}
       {payoutModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-2xl max-w-md w-full p-6 sm:p-8 relative">
-            <h3 className="text-lg font-extrabold text-gray-950 mb-1.5">Demande de retrait</h3>
-            <p className="text-xs text-gray-500 mb-6">
+          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-w-md w-full p-6 sm:p-8 relative transition-colors">
+            <h3 className="text-lg font-extrabold text-gray-950 dark:text-white mb-1.5 font-heading">Demande de retrait</h3>
+            <p className="text-xs text-gray-500 dark:text-zinc-400 mb-6">
               Les fonds seront versés sur votre compte{' '}
-              <strong className="text-gray-900 uppercase">
+              <strong className="text-gray-900 dark:text-white uppercase">
                 {profile?.wallet_provider} ({profile?.wallet_number})
               </strong>
               . Aucun frais supplémentaire n'est appliqué au retrait.
@@ -578,15 +578,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             {payoutSuccess ? (
               <div className="text-center py-6 space-y-2">
                 <CircleCheck className="w-10 h-10 text-emerald-500 mx-auto" />
-                <p className="text-sm font-bold text-gray-900">Demande de versement validée !</p>
-                <p className="text-xs text-gray-500">
+                <p className="text-sm font-bold text-gray-900 dark:text-white">Demande de versement validée !</p>
+                <p className="text-xs text-gray-500 dark:text-zinc-400">
                   Les fonds seront crédités directement sur votre numéro Mobile Money.
                 </p>
               </div>
             ) : (
               <form onSubmit={handleRequestPayout} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
                     Montant à retirer (FCFA)
                   </label>
                   <input
@@ -598,15 +598,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     onChange={(e) =>
                       setPayoutAmount(e.target.value === '' ? '' : Number(e.target.value))
                     }
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base font-bold focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                    className="w-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-[#1a1d2c] rounded-xl px-4 py-3 text-base font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   />
-                  <p className="text-[11px] text-gray-400 mt-1">
+                  <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
                     Solde disponible : {availableBalance.toLocaleString()} FCFA (Min. 5 000 FCFA)
                   </p>
                 </div>
 
                 {payoutError && (
-                  <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-xl text-xs font-medium flex items-center gap-2">
+                  <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 rounded-xl text-xs font-medium flex items-center gap-2">
                     <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
                     <span>{payoutError}</span>
                   </div>
@@ -616,7 +616,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   <button
                     type="button"
                     onClick={() => setPayoutModalOpen(false)}
-                    className="flex-1 py-3 px-4 rounded-xl border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex-1 py-3 px-4 rounded-xl border border-gray-200 dark:border-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                   >
                     Annuler
                   </button>

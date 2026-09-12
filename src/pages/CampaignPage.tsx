@@ -228,13 +228,13 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
   const currentUrl = window.location.href.split('?')[0]
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8 transition-colors">
       {/* Fil d'Ariane et actions du haut */}
       <div className="flex items-center justify-between">
         <button
           type="button"
           onClick={() => onNavigate(`/@${username}`)}
-          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 hover:text-gray-950 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-zinc-400 hover:text-gray-950 dark:hover:text-white transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Profil de @{username}</span>
@@ -244,9 +244,9 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
           <button
             type="button"
             onClick={() => setShareModalOpen(true)}
-            className="inline-flex items-center gap-1.5 bg-white border border-gray-200 hover:border-gray-300 text-gray-800 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors shadow-2xs cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 text-gray-800 dark:text-zinc-200 text-xs font-bold px-3.5 py-2 rounded-xl transition-colors shadow-2xs cursor-pointer"
           >
-            <Share2 className="w-3.5 h-3.5 text-orange-600" />
+            <Share2 className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
             <span>Partager</span>
           </button>
 
@@ -254,7 +254,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
             type="button"
             onClick={() => setReportModalOpen(true)}
             title="Signaler un abus ou contenu illégal"
-            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+            className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors cursor-pointer"
           >
             <Flag className="w-4 h-4" />
           </button>
@@ -263,9 +263,9 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
 
       {/* Alerte si suspendue ou expirée */}
       {campaign.status === 'suspended' && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-2xl flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
-          <div className="text-xs text-red-900">
+        <div className="p-4 bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-2xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+          <div className="text-xs text-red-900 dark:text-red-200">
             <p className="font-bold">Collecte temporairement suspendue</p>
             <p className="mt-0.5">
               Cette collecte fait actuellement l'objet d'une revue de conformité. Les contributions sont temporairement désactivées.
@@ -278,25 +278,25 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Colonne gauche : Contenu & Histoire */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-3xl border border-orange-100/70 shadow-xs p-6 sm:p-8 space-y-6">
+          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-6">
             {/* En-tête Organisateur / Bénéficiaire */}
-            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
               <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-extrabold text-base shadow-xs">
                 {(campaign.profile?.display_name || username).slice(0, 2).toUpperCase()}
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-sm font-extrabold text-gray-950">
+                  <span className="text-sm font-extrabold text-gray-950 dark:text-white">
                     {campaign.profile?.display_name || username}
                   </span>
                   {campaign.profile?.verification_status === 'verified' && (
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
                       <CheckCircle2 className="w-3 h-3" />
                       <span>Identité vérifiée</span>
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-zinc-400">
                   Organisateur de la collecte • @{username}
                 </p>
               </div>
@@ -304,20 +304,20 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
 
             {/* Titre et description */}
             <div className="space-y-3">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-950 tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-950 dark:text-white tracking-tight leading-tight font-heading">
                 {campaign.title}
               </h1>
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
+              <p className="text-sm text-gray-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
                 {campaign.description}
               </p>
             </div>
 
             {/* Informations sur le bénéficiaire */}
             {campaign.beneficiary_type === 'other' && campaign.beneficiary_name && (
-              <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200/60 text-xs text-gray-700 space-y-1">
-                <p className="font-bold text-gray-900">Bénéficiaire désigné des fonds :</p>
+              <div className="p-4 bg-gray-50 dark:bg-[#181b29] rounded-2xl border border-gray-200/60 dark:border-zinc-700/60 text-xs text-gray-700 dark:text-zinc-300 space-y-1">
+                <p className="font-bold text-gray-900 dark:text-white">Bénéficiaire désigné des fonds :</p>
                 <p>{campaign.beneficiary_name}</p>
-                <p className="text-[11px] text-gray-500">
+                <p className="text-[11px] text-gray-500 dark:text-zinc-400">
                   Les fonds collectés sont directement réservés au bénéficiaire conformément à nos règles de sécurité.
                 </p>
               </div>
@@ -325,39 +325,39 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
           </div>
 
           {/* Mur des soutiens et messages */}
-          <div className="bg-white rounded-3xl border border-orange-100/70 shadow-xs p-6 sm:p-8 space-y-4 text-left">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
-              <h3 className="text-sm font-extrabold text-gray-950 flex items-center gap-2">
+          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-4 text-left">
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
+              <h3 className="text-sm font-extrabold text-gray-950 dark:text-white flex items-center gap-2 font-heading">
                 <Heart className="w-4 h-4 text-orange-600 fill-orange-500" />
                 <span>Contributions récentes</span>
               </h3>
-              <span className="text-xs font-semibold text-gray-400">
+              <span className="text-xs font-semibold text-gray-400 dark:text-zinc-500">
                 {donations.length} soutien{donations.length > 1 ? 's' : ''}
               </span>
             </div>
 
             {donations.length === 0 ? (
-              <p className="text-xs text-gray-400 py-6 text-center">
+              <p className="text-xs text-gray-400 dark:text-zinc-500 py-6 text-center">
                 Soyez le premier à soutenir cette collecte !
               </p>
             ) : (
               <div className="space-y-3">
                 {donations.map((d) => (
-                  <div key={d.id} className="p-4 rounded-2xl bg-gray-50/80 border border-gray-100 text-xs">
+                  <div key={d.id} className="p-4 rounded-2xl bg-gray-50/80 dark:bg-[#181b29] border border-gray-100 dark:border-zinc-800 text-xs">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-gray-950">
+                      <span className="font-bold text-gray-950 dark:text-white">
                         {d.is_anonymous || !d.donor_name ? 'Contributeur anonyme' : d.donor_name}
                       </span>
-                      <span className="font-extrabold text-emerald-600">
+                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
                         +{d.amount.toLocaleString()} FCFA
                       </span>
                     </div>
                     {d.message && (
-                      <p className="text-gray-600 italic mt-1 leading-relaxed">
+                      <p className="text-gray-600 dark:text-zinc-300 italic mt-1 leading-relaxed">
                         "{d.message}"
                       </p>
                     )}
-                    <span className="text-[10px] text-gray-400 block mt-1.5">
+                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 block mt-1.5">
                       {new Date(d.created_at).toLocaleDateString('fr-FR', {
                         day: 'numeric',
                         month: 'short',
@@ -375,24 +375,24 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
         {/* Colonne droite : Barre de progression & Formulaire de don direct */}
         <div className="lg:col-span-5 space-y-6 lg:sticky lg:top-24">
           {/* Progression */}
-          <div className="bg-white rounded-3xl border border-orange-100/70 shadow-xs p-6 space-y-4">
+          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 space-y-4">
             <div className="space-y-2">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <span className="text-2xl font-heading font-extrabold text-gray-950">
+                  <span className="text-2xl font-heading font-extrabold text-gray-950 dark:text-white">
                     {formatFcfa(campaign.collected_amount)} FCFA
                   </span>
-                  <span className="text-xs text-gray-400 ml-1.5">
+                  <span className="text-xs text-gray-400 dark:text-zinc-500 ml-1.5">
                     sur {formatFcfa(campaign.goal_amount)} FCFA
                   </span>
                 </div>
-                <span className="text-base font-heading font-extrabold text-orange-600">
+                <span className="text-base font-heading font-extrabold text-orange-600 dark:text-orange-400">
                   {percentage}%
                 </span>
               </div>
 
               {/* Jauge */}
-              <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
+              <div className="w-full h-3 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500"
                   style={{ width: `${percentage}%` }}
@@ -400,24 +400,24 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
               </div>
 
               {/* Paliers visuels */}
-              <div className="flex justify-between text-[10px] text-gray-400 font-bold uppercase tracking-wider pt-1">
+              <div className="flex justify-between text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-wider pt-1">
                 <span>0%</span>
-                <span className={percentage >= 25 ? 'text-orange-600' : ''}>25%</span>
-                <span className={percentage >= 50 ? 'text-orange-600' : ''}>50%</span>
-                <span className={percentage >= 70 ? 'text-orange-600' : ''}>75%</span>
-                <span className={percentage >= 100 ? 'text-emerald-600' : ''}>100%</span>
+                <span className={percentage >= 25 ? 'text-orange-600 dark:text-orange-400' : ''}>25%</span>
+                <span className={percentage >= 50 ? 'text-orange-600 dark:text-orange-400' : ''}>50%</span>
+                <span className={percentage >= 70 ? 'text-orange-600 dark:text-orange-400' : ''}>75%</span>
+                <span className={percentage >= 100 ? 'text-emerald-600 dark:text-emerald-400' : ''}>100%</span>
               </div>
             </div>
 
-            <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-3 text-xs text-gray-600">
+            <div className="pt-2 border-t border-gray-100 dark:border-zinc-800 grid grid-cols-2 gap-3 text-xs text-gray-600 dark:text-zinc-400">
               <div className="flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-gray-400" />
+                <Users className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
                 <span>
-                  <strong className="text-gray-900">{campaign.contributions_count}</strong> soutiens
+                  <strong className="text-gray-900 dark:text-white">{campaign.contributions_count}</strong> soutiens
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-gray-400" />
+                <Clock className="w-4 h-4 text-gray-400 dark:text-zinc-500" />
                 <span>Collecte active</span>
               </div>
             </div>
@@ -432,7 +432,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
               onDonationSuccess={handleDonationSuccess}
             />
           ) : (
-            <div className="p-6 bg-gray-50 border border-gray-200 rounded-3xl text-center text-xs text-gray-500">
+            <div className="p-6 bg-gray-50 dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-3xl text-center text-xs text-gray-500 dark:text-zinc-400">
               Cette collecte n'accepte plus de nouveaux dons.
             </div>
           )}

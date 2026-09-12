@@ -47,41 +47,41 @@ export const ShareModal: React.FC<ShareModalProps> = ({ title, url, onClose }) =
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-2xl max-w-sm w-full p-6 relative">
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-gray-100 dark:border-zinc-800 shadow-2xl max-w-sm w-full p-6 relative">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-700 rounded-xl transition-colors"
+          className="absolute right-4 top-4 p-2 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 rounded-xl transition-colors cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
 
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-xl bg-orange-100 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center">
             <Share2 className="w-4 h-4" />
           </div>
-          <h3 className="text-base font-extrabold text-gray-950">Partager cette collecte</h3>
+          <h3 className="text-base font-extrabold text-gray-950 dark:text-white">Partager cette collecte</h3>
         </div>
 
-        <p className="text-xs text-gray-500 mb-4 line-clamp-2">
+        <p className="text-xs text-gray-500 dark:text-zinc-400 mb-4 line-clamp-2">
           {title}
         </p>
 
         {/* Lien direct et bouton copier */}
-        <div className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-xl mb-4">
+        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl mb-4">
           <input
             type="text"
             readOnly
             value={url}
-            className="flex-1 bg-transparent text-xs text-gray-700 font-mono outline-none truncate px-1"
+            className="flex-1 bg-transparent text-xs text-gray-700 dark:text-zinc-300 font-mono outline-none truncate px-1"
           />
           <button
             type="button"
             onClick={handleCopy}
-            className="shrink-0 bg-white border border-gray-200 hover:border-gray-300 text-gray-800 text-xs font-bold py-1.5 px-3 rounded-lg shadow-xs transition-colors flex items-center gap-1"
+            className="shrink-0 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 text-gray-800 dark:text-zinc-200 text-xs font-bold py-1.5 px-3 rounded-lg shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
           >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copié' : 'Copier'}</span>
           </button>
         </div>
@@ -91,35 +91,35 @@ export const ShareModal: React.FC<ShareModalProps> = ({ title, url, onClose }) =
           <button
             type="button"
             onClick={shareWhatsApp}
-            className="flex items-center justify-center gap-2 p-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center justify-center gap-2 p-3 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-emerald-200/50 dark:border-emerald-900/50"
           >
             <span>WhatsApp</span>
           </button>
           <button
             type="button"
             onClick={shareFacebook}
-            className="flex items-center justify-center gap-2 p-3 bg-blue-50 hover:bg-blue-100 text-blue-800 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center justify-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-300 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-blue-200/50 dark:border-blue-900/50"
           >
             <span>Facebook</span>
           </button>
           <button
             type="button"
             onClick={shareX}
-            className="flex items-center justify-center gap-2 p-3 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center justify-center gap-2 p-3 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-900 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-gray-200 dark:border-zinc-700"
           >
             <span>X (Twitter)</span>
           </button>
           <button
             type="button"
             onClick={handleNativeShare}
-            className="flex items-center justify-center gap-2 p-3 bg-orange-50 hover:bg-orange-100 text-orange-800 rounded-xl text-xs font-bold transition-colors"
+            className="flex items-center justify-center gap-2 p-3 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/50 text-orange-800 dark:text-orange-300 rounded-xl text-xs font-bold transition-colors cursor-pointer border border-orange-200/50 dark:border-orange-900/50"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>Partage natif</span>
           </button>
         </div>
 
-        <p className="text-[11px] text-gray-400 text-center leading-relaxed">
+        <p className="text-[11px] text-gray-400 dark:text-zinc-500 text-center leading-relaxed">
           Pour TikTok et Instagram, collez simplement ce lien dans votre bio ou vos stories.
         </p>
       </div>
