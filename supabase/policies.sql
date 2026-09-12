@@ -1,4 +1,4 @@
--- DONKA RLS Policies (Row Level Security)
+-- Donkai RLS Policies (Row Level Security)
 
 -- Activation du RLS sur toutes les tables
 ALTER TABLE creators ENABLE ROW LEVEL SECURITY;

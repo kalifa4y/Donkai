@@ -122,7 +122,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
             </label>
             <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-orange-500 focus-within:border-orange-500 transition-all">
               <span className="px-3.5 py-3 text-sm font-semibold text-gray-400 bg-gray-50 border-r border-gray-200">
-                donka.app/@
+                donkai.app/@
               </span>
               <input
                 type="text"

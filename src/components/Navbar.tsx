@@ -22,7 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
             <span className="font-extrabold text-lg tracking-tighter">D</span>
           </div>
           <span className="font-extrabold text-xl tracking-tight text-gray-950 group-hover:text-orange-600 transition-colors">
-            DONKA
+            Donkai
           </span>
         </button>
 

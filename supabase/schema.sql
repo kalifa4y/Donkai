@@ -1,4 +1,4 @@
--- DONKA Database Schema (Supabase Auth + SasPay)
+-- Donkai Database Schema (Supabase Auth + SasPay)
 
 -- 1. Table des profils créateurs (liée directement à auth.users)
 CREATE TABLE creators (

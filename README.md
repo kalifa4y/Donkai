@@ -1,4 +1,4 @@
-# DONKA
+# Donkai
 
 Plateforme de donation mobile-first pour l'Afrique de l'Ouest.
 Recevez des dons via Orange Money, Wave, Moov Money et MTN MoMo — sans carte bancaire, sans compte PayPal étranger.
@@ -36,7 +36,7 @@ Partage des fonds (5% commission plateforme / 95% pour le créateur)
 ## Structure du projet
 
 ```
-donka/
+donkai/
 ├── src/
 │   ├── components/
 │   │   ├── Navbar.tsx                # Barre de navigation
@@ -85,7 +85,7 @@ donka/
 
 ## Core Flow (Don)
 
-1. Le donateur ouvre `donka.app/@createur`
+1. Le donateur ouvre `donkai.app/@createur`
 2. Il visualise le profil et le formulaire de don
 3. Il choisit un montant prédéfini (500, 1 000, 2 000, 5 000 XOF) ou un montant libre (minimum 100 XOF)
 4. Il renseigne son nom (ou reste anonyme), son email et un message optionnel
@@ -105,8 +105,8 @@ donka/
 
 ```bash
 # Cloner le projet
-git clone <repo-url>
-cd donka
+git clone https://github.com/kalifa4y/Donkai.git
+cd donkai
 
 # Installer les dépendances
 pnpm install
@@ -127,7 +127,7 @@ pnpm build
 |---|---|
 | `VITE_SUPABASE_URL` | Supabase -> Settings -> API -> Project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase -> Settings -> API -> Anon public key |
-| `VITE_APP_URL` | URL de votre application (ex: https://donka.app ou http://localhost:5173) |
+| `VITE_APP_URL` | URL de votre application (ex: https://donkai.app ou http://localhost:5173) |
 
 ### Variables secrètes (Supabase Secrets / Edge Functions)
 

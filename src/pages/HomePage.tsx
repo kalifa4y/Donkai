@@ -23,7 +23,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         </h1>
 
         <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-10 leading-relaxed font-normal">
-          DONKA permet aux créateurs de contenu de recevoir des dons par{' '}
+          Donkai permet aux créateurs de contenu de recevoir des dons par{' '}
           <strong className="text-gray-900 font-semibold">Orange Money</strong>,{' '}
           <strong className="text-gray-900 font-semibold">Wave</strong> et{' '}
           <strong className="text-gray-900 font-semibold">Moov Money</strong>. Sans carte bancaire, sans compte PayPal étranger.
@@ -94,7 +94,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             Partagez simplement votre lien personnalisé sur TikTok, YouTube, WhatsApp ou Instagram.
           </p>
           <div className="inline-block bg-white border border-orange-200 px-6 py-3 rounded-2xl shadow-sm text-orange-600 font-mono font-bold text-sm">
-            donka.app/@votre_pseudo
+            donkai.app/@votre_pseudo
           </div>
         </div>
       </section>

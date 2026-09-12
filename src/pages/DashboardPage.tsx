@@ -175,7 +175,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         <div className="flex items-center gap-2.5">
           <div className="bg-gray-50 border border-gray-200 px-4 py-2.5 rounded-xl font-mono text-xs text-gray-600 truncate max-w-[220px] sm:max-w-xs">
-            donka.app/@{creator.username}
+            donkai.app/@{creator.username}
           </div>
           <button
             type="button"

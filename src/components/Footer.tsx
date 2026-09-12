@@ -10,7 +10,7 @@ export const Footer: React.FC = () => {
             <div className="w-6 h-6 rounded-lg bg-orange-500 flex items-center justify-center text-white text-xs font-bold">
               D
             </div>
-            <span className="font-bold text-gray-900 tracking-tight">DONKA</span>
+            <span className="font-bold text-gray-900 tracking-tight">Donkai</span>
           </div>
           <p className="text-xs text-gray-500 max-w-sm">
             La solution de monétisation et de soutien direct pour les créateurs d'Afrique de l'Ouest.

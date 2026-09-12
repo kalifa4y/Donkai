@@ -4,7 +4,7 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || ''
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || ''
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('DONKA: Supabase URL ou clé anonyme manquante dans les variables d’environnement.')
+  console.warn('Donkai: Supabase URL ou clé anonyme manquante dans les variables d’environnement.')
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)

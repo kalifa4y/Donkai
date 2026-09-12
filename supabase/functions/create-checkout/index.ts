@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
       currency: 'XOF',
       description: `Soutien pour ${creator.display_name || creator.username}`,
       customer_name: donor_name || 'Anonyme',
-      customer_email: donor_email || 'donateur@donka.app',
+      customer_email: donor_email || 'donateur@donkai.app',
       return_url: return_url || '',
       metadata: {
         donation_id: donation.id,

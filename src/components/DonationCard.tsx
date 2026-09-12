@@ -38,7 +38,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({ creatorId, creatorNa
           creator_id: creatorId,
           amount: numAmount,
           donor_name: donorName.trim() || 'Anonyme',
-          donor_email: donorEmail.trim() || 'donateur@donka.app',
+          donor_email: donorEmail.trim() || 'donateur@donkai.app',
           message: message.trim() || null,
           return_url: returnUrl,
         },

@@ -74,7 +74,7 @@ export const CreatorPage: React.FC<CreatorPageProps> = ({ username, onNavigate }
   const shareWhatsApp = () => {
     if (!creator) return
     const text = encodeURIComponent(
-      `Soutenez ${creator.display_name} sur DONKA : ${window.location.href.split('?')[0]}`
+      `Soutenez ${creator.display_name} sur Donkai : ${window.location.href.split('?')[0]}`
     )
     window.open(`https://wa.me/?text=${text}`, '_blank')
   }
@@ -232,7 +232,7 @@ export const CreatorPage: React.FC<CreatorPageProps> = ({ username, onNavigate }
             onClick={() => onNavigate('/')}
             className="text-orange-600 font-bold hover:underline"
           >
-            DONKA
+            Donkai
           </button>{' '}
           — Créez votre page gratuite
         </p>
