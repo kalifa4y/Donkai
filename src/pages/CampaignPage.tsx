@@ -29,6 +29,10 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [reportModalOpen, setReportModalOpen] = useState(false)
 
+  const formatFcfa = (val: number): string => {
+    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  }
+
   // Données de secours de démonstration si la collecte est introuvable en base de données
   const getDemoCampaign = (): Campaign => ({
     id: 'demo-campaign-gao',
@@ -376,10 +380,10 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
               <div className="flex items-baseline justify-between">
                 <div>
                   <span className="text-2xl font-heading font-extrabold text-gray-950">
-                    {campaign.collected_amount.toLocaleString('fr-FR')} FCFA
+                    {formatFcfa(campaign.collected_amount)} FCFA
                   </span>
                   <span className="text-xs text-gray-400 ml-1.5">
-                    sur {campaign.goal_amount.toLocaleString('fr-FR')} FCFA
+                    sur {formatFcfa(campaign.goal_amount)} FCFA
                   </span>
                 </div>
                 <span className="text-base font-heading font-extrabold text-orange-600">

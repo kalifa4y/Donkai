@@ -63,6 +63,17 @@ export const translations: Translations = {
   'security.point2': { fr: 'Des contrôles de sécurité pour protéger les collectes et les bénéficiaires.', en: 'Strict security controls to safeguard campaigns and beneficiaries.' },
   'security.point3': { fr: 'Protection renforcée du numéro de versement avec délai de verrouillage.', en: 'Reinforced payout number protection with a security lockout period.' },
 
+  // Product Showcase
+  'showcase.title': { fr: 'Découvrez l’interface DONKAI', en: 'Explore the DONKAI interface' },
+  'showcase.subtitle': { fr: 'Une expérience pensée pour le mobile, ultra-rapide et sans friction.', en: 'A mobile-first experience built for speed and zero friction.' },
+  'showcase.tab_campaign': { fr: 'Page de collecte', en: 'Campaign page' },
+  'showcase.tab_dashboard': { fr: 'Tableau de bord', en: 'Creator dashboard' },
+  'showcase.tab_profile': { fr: 'Profil créateur', en: 'Public profile' },
+
+  // FAQ
+  'faq.title': { fr: 'Questions fréquentes', en: 'Frequently asked questions' },
+  'faq.subtitle': { fr: 'Tout ce que vous devez savoir pour lancer ou soutenir une collecte.', en: 'Everything you need to know about starting or supporting a campaign.' },
+
   // Final CTA
   'cta_final.title': { fr: 'Prêt à lancer votre collecte ?', en: 'Ready to launch your campaign?' },
   'cta_final.desc': { fr: 'Votre communauté veut vous soutenir. Donnez-lui simplement un moyen fiable de le faire.', en: 'Your community wants to support you. Simply give them a reliable way to do so.' },
