@@ -302,7 +302,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <span>Solde disponible</span>
             <Coins className="w-4 h-4 text-orange-600" />
           </div>
-          <p className="text-2xl font-extrabold text-gray-950">
+          <p className="text-2xl font-heading font-extrabold text-gray-950">
             {availableBalance.toLocaleString()} FCFA
           </p>
           <button
@@ -325,7 +325,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <span>Total collecté (net)</span>
             <TrendingUp className="w-4 h-4 text-emerald-600" />
           </div>
-          <p className="text-2xl font-extrabold text-emerald-600">
+          <p className="text-2xl font-heading font-extrabold text-emerald-600">
             {totalRaisedNet.toLocaleString()} FCFA
           </p>
           <p className="text-[11px] text-gray-400">
@@ -339,7 +339,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <span>Déjà retiré</span>
             <Wallet className="w-4 h-4 text-blue-600" />
           </div>
-          <p className="text-2xl font-extrabold text-gray-950">
+          <p className="text-2xl font-heading font-extrabold text-gray-950">
             {totalPaidOut.toLocaleString()} FCFA
           </p>
           {pendingPayouts > 0 ? (
@@ -358,7 +358,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <span>Contributions</span>
             <Users className="w-4 h-4 text-gray-700" />
           </div>
-          <p className="text-2xl font-extrabold text-gray-950">
+          <p className="text-2xl font-heading font-extrabold text-gray-950">
             {totalDonorsCount}
           </p>
           <p className="text-[11px] text-gray-400">

@@ -105,14 +105,14 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             <div className="space-y-2.5">
               <div className="flex items-end justify-between">
                 <div>
-                  <span className="text-2xl sm:text-3xl font-extrabold text-gray-950">
+                  <span className="text-2xl sm:text-3xl font-heading font-extrabold text-gray-950">
                     {demoAmount.toLocaleString()} FCFA
                   </span>
                   <span className="text-xs text-gray-500 ml-1.5 font-medium">
                     sur {demoGoal.toLocaleString()} FCFA
                   </span>
                 </div>
-                <span className="text-base font-extrabold text-orange-600">
+                <span className="text-base font-heading font-extrabold text-orange-600">
                   {demoProgress}%
                 </span>
               </div>

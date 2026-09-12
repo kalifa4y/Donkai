@@ -375,14 +375,14 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
             <div className="space-y-2">
               <div className="flex items-baseline justify-between">
                 <div>
-                  <span className="text-2xl font-extrabold text-gray-950">
-                    {campaign.collected_amount.toLocaleString()} FCFA
+                  <span className="text-2xl font-heading font-extrabold text-gray-950">
+                    {campaign.collected_amount.toLocaleString('fr-FR')} FCFA
                   </span>
                   <span className="text-xs text-gray-400 ml-1.5">
-                    sur {campaign.goal_amount.toLocaleString()} FCFA
+                    sur {campaign.goal_amount.toLocaleString('fr-FR')} FCFA
                   </span>
                 </div>
-                <span className="text-base font-extrabold text-orange-600">
+                <span className="text-base font-heading font-extrabold text-orange-600">
                   {percentage}%
                 </span>
               </div>

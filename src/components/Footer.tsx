@@ -15,10 +15,10 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center text-white text-xs font-bold">
+              <div className="w-7 h-7 rounded-lg bg-orange-600 flex items-center justify-center text-white text-xs font-heading font-bold">
                 D
               </div>
-              <span className="font-extrabold text-gray-950 tracking-tight text-base">DONKAI</span>
+              <span className="font-heading font-bold text-gray-950 tracking-tight text-base">DONKAI</span>
             </div>
             <p className="text-xs text-gray-500 max-w-sm leading-relaxed">
               Créer, partager, recevoir le soutien de votre communauté. Conçu pour le Mali et l'Afrique de l'Ouest.

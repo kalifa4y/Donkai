@@ -31,12 +31,16 @@ Une gamme enracinée dans la modernité ouest-africaine, mêlant teintes telluri
 ---
 
 ## 3. Typographie
-- **Typographie de Titrage (Display & Brand) :** `Space Grotesk` ou `Outfit` combiné à `Plus Jakarta Sans`.
-  - Poids forts (700, 800), tracking resserré (`tracking-tight`), lisibilité percutante en grand format.
-- **Typographie de Corps de texte :** `Plus Jakarta Sans`
-  - Clarté exceptionnelle sur smartphone même à 12-14px.
-- **Typographie Numérique & Données :** `JetBrains Mono` ou `ui-monospace`
-  - Pour les montants en FCFA, les dates, les slugs de collectes et les identifiants.
+- **Typographie de Titrage, Headings & Logo :** `Cal Sans`
+  - Typographie géométrique moderne créée par Mark Mullen pour Cal.com.
+  - Caractère affirmé, élégance géométrique et punch visuel pour les titres (`h1`-`h6`), le logo DONKAI (`.font-heading`) et les grands chiffres clés.
+  - Auto-hébergée via `@fontsource/cal-sans` pour une indépendance réseau complète et un rendu instantané sans saut de mise en page (CLS).
+- **Typographie de Corps de texte & Interface :** `Google Sans Flex`
+  - Police variable hautement lisible, proportionnée et douce de Google.
+  - Idéale pour le texte courant, les descriptions, les formulaires, les boutons et les labels sur smartphones sous forte luminosité.
+  - Auto-hébergée via `@fontsource/google-sans-flex` (graisses 400, 500, 600, 700).
+- **Typographie Numérique & Données :** `Cal Sans` / `JetBrains Mono` / `ui-monospace`
+  - Pour les montants en FCFA, les pourcentages, les dates, les slugs de collectes et les identifiants.
 
 ---
 

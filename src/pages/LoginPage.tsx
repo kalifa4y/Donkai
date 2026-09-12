@@ -48,7 +48,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md bg-white rounded-3xl border border-orange-100/80 shadow-sm p-6 sm:p-8 text-center">
         {/* Logo de marque */}
-        <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center text-xl font-extrabold mx-auto mb-4 shadow-sm shadow-orange-500/20">
+        <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center text-xl font-heading font-bold mx-auto mb-4 shadow-sm shadow-orange-500/20">
           D
         </div>
 

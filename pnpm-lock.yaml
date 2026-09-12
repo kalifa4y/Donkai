@@ -11,6 +11,12 @@ importers:
       '@clerk/clerk-react':
         specifier: ^5.61.3
         version: 5.61.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@fontsource/cal-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/google-sans-flex':
+        specifier: ^5.3.1
+        version: 5.3.1
       '@supabase/supabase-js':
         specifier: ^2.49.1
         version: 2.105.4
@@ -159,6 +165,12 @@ packages:
 
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
+
+  '@fontsource/cal-sans@5.3.0':
+    resolution: {integrity: sha512-XKLenekRFhBqlHyWfGu/5Lz4hmFGIJUvINKW2UgEnmYMj1YL5Vg9PsMGJpGyo0fmUvvewEnZfgPHJEcweNeR5g==}
+
+  '@fontsource/google-sans-flex@5.3.1':
+    resolution: {integrity: sha512-m8vKMunEkNSyqf5YEu19b8qPl5iHHTnh+roH0BwA0fUPnIDC44PyDcrLjNX3nGzegIvNaNeQATZX4bPyveVoYg==}
 
   '@jridgewell/gen-mapping@0.3.13':
     resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
@@ -940,6 +952,10 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@fontsource/cal-sans@5.3.0': {}
+
+  '@fontsource/google-sans-flex@5.3.1': {}
 
   '@jridgewell/gen-mapping@0.3.13':
     dependencies:

@@ -26,10 +26,10 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate }) => {
             className="flex items-center gap-2.5 text-left group focus:outline-none cursor-pointer"
           >
             <div className="w-9 h-9 rounded-xl bg-orange-600 flex items-center justify-center text-white shadow-sm shadow-orange-500/20 group-hover:scale-105 transition-transform">
-              <span className="font-extrabold text-lg tracking-tighter">D</span>
+              <span className="font-heading font-bold text-lg tracking-tighter">D</span>
             </div>
             <div className="flex flex-col">
-              <span className="font-extrabold text-xl tracking-tight text-gray-950 group-hover:text-orange-600 transition-colors">
+              <span className="font-heading font-bold text-xl tracking-tight text-gray-950 group-hover:text-orange-600 transition-colors">
                 DONKAI
               </span>
             </div>

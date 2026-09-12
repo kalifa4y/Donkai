@@ -208,19 +208,19 @@ export const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({ username
             {/* Statistiques d'impact public */}
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-6 pt-2 text-xs text-gray-500">
               <div>
-                <strong className="text-base font-extrabold text-gray-900 mr-1">
+                <strong className="text-base font-heading font-extrabold text-gray-900 mr-1">
                   {campaigns.length}
                 </strong>
                 collecte{campaigns.length > 1 ? 's' : ''}
               </div>
               <div>
-                <strong className="text-base font-extrabold text-emerald-600 mr-1">
+                <strong className="text-base font-heading font-extrabold text-emerald-600 mr-1">
                   {totalCollected.toLocaleString()} FCFA
                 </strong>
                 mobilisés
               </div>
               <div>
-                <strong className="text-base font-extrabold text-gray-900 mr-1">
+                <strong className="text-base font-heading font-extrabold text-gray-900 mr-1">
                   {totalSupporters}
                 </strong>
                 soutiens reçus
