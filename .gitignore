@@ -31,3 +31,4 @@ dist-ssr
 .vercel
 .playwright-mcp
 .playwright-data
+supabase/.temp
