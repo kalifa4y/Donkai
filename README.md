@@ -3,6 +3,8 @@
 Plateforme de donation mobile-first pour l'Afrique de l'Ouest.
 Recevez des dons via Orange Money, Wave, Moov Money et MTN MoMo — sans carte bancaire, sans compte PayPal étranger.
 
+Lien de production : https://donkai.vercel.app/
+
 ## Stack technique
 
 | Couche | Technologie |
