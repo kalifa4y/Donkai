@@ -48,7 +48,7 @@ export const DonationCard: React.FC<DonationCardProps> = ({
       const returnUrl = `${window.location.origin}${window.location.pathname}?payment=success`
 
       // 1. Tenter l'appel à l'Edge Function serveur Supabase
-      const { data } = await supabase.functions.invoke('create-checkout', {
+      const { data, error: invokeError } = await supabase.functions.invoke('create-checkout', {
         body: {
           campaign_id: campaignId,
           amount: numAmount,
@@ -63,30 +63,58 @@ export const DonationCard: React.FC<DonationCardProps> = ({
       })
 
       if (data?.checkout_url) {
-        // Redirection vers le checkout réel du prestataire
+        // Redirection vers le checkout réel du prestataire SasPay
         window.location.href = data.checkout_url
         return
       }
 
-      // Si l'Edge Function ou le prestataire n'est pas encore déployé en environnement local,
-      // on enregistre directement la contribution en base pour tester immédiatement le parcours
-      const { error: insertError } = await supabase.from('donations').insert({
-        campaign_id: campaignId,
-        amount: numAmount,
-        fee,
-        net_amount: netAmount,
-        currency: 'XOF',
-        donor_name: isAnonymous ? null : (donorName.trim() || null),
-        donor_email: donorEmail.trim() || null,
-        is_anonymous: isAnonymous,
-        message: message.trim() || null,
-        payment_method: paymentProvider,
-        status: 'paid', // Confirmé pour la démonstration locale
-        idempotency_key: idempotencyKey,
-      })
+      if (data?.error) {
+        throw new Error(data.error)
+      }
+
+      const donationId = data?.donation_id || idempotencyKey
+
+      // Si l'Edge function n'était pas joignable (invokeError), tentative d'insertion de secours
+      if (invokeError && !data?.donation_id) {
+        const { error: insertError } = await supabase.from('donations').insert({
+          campaign_id: campaignId,
+          amount: numAmount,
+          fee,
+          net_amount: netAmount,
+          currency: 'XOF',
+          donor_name: isAnonymous ? null : (donorName.trim() || null),
+          donor_email: donorEmail.trim() || null,
+          is_anonymous: isAnonymous,
+          message: message.trim() || null,
+          payment_method: paymentProvider,
+          status: 'pending', // Strictement conforme à la politique RLS donations_insert_public
+          idempotency_key: idempotencyKey,
+        })
+
+        if (insertError) {
+          // Fallback localstorage pour garantir la fluidité même sans base connectée
+          const localDonations = JSON.parse(localStorage.getItem(`donkai_donations_${campaignId}`) || '[]')
+          localDonations.unshift({
+            id: donationId,
+            campaign_id: campaignId,
+            amount: numAmount,
+            fee,
+            net_amount: netAmount,
+            currency: 'XOF',
+            donor_name: isAnonymous ? null : (donorName.trim() || null),
+            donor_email: donorEmail.trim() || null,
+            is_anonymous: isAnonymous,
+            message: message.trim() || null,
+            payment_method: paymentProvider,
+            status: 'paid',
+            created_at: new Date().toISOString(),
+          })
+          localStorage.setItem(`donkai_donations_${campaignId}`, JSON.stringify(localDonations))
+        }
+      }
 
       const newDonation: Donation = {
-        id: idempotencyKey,
+        id: donationId,
         campaign_id: campaignId,
         amount: numAmount,
         fee,
@@ -99,13 +127,6 @@ export const DonationCard: React.FC<DonationCardProps> = ({
         payment_method: paymentProvider,
         status: 'paid',
         created_at: new Date().toISOString(),
-      }
-
-      if (insertError) {
-        // Fallback localstorage pour garantir la fluidité même sans base connectée
-        const localDonations = JSON.parse(localStorage.getItem(`donkai_donations_${campaignId}`) || '[]')
-        localDonations.unshift(newDonation)
-        localStorage.setItem(`donkai_donations_${campaignId}`, JSON.stringify(localDonations))
       }
 
       setIsCompleted(true)

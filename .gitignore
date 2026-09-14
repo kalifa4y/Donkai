@@ -31,4 +31,7 @@ dist-ssr
 .vercel
 .playwright-mcp
 .playwright-data
+playwright-report
+test-results
 supabase/.temp
+

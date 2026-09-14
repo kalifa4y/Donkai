@@ -1,5 +1,16 @@
 {
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    {
+      "source": "/api/saspay-webhook",
+      "destination": "https://vhwctqdapvdujlebtzux.supabase.co/functions/v1/saspay-webhook"
+    },
+    {
+      "source": "/api/create-checkout",
+      "destination": "https://vhwctqdapvdujlebtzux.supabase.co/functions/v1/create-checkout"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

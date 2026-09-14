@@ -343,6 +343,34 @@ CREATE POLICY "reports_update_admin" ON reports
     OR auth.role() = 'service_role'
   );
 
+-- Trigger de modération automatique : dès 3 signalements sur une collecte, passer en suspension préventive (Règle PRODUCT.md 4.5)
+CREATE OR REPLACE FUNCTION handle_auto_flag_reports()
+RETURNS TRIGGER AS $$
+DECLARE
+  active_reports_count INT;
+BEGIN
+  IF NEW.campaign_id IS NOT NULL THEN
+    SELECT COUNT(*) INTO active_reports_count
+    FROM reports
+    WHERE campaign_id = NEW.campaign_id;
+
+    IF active_reports_count >= 3 THEN
+      UPDATE campaigns
+      SET status = 'suspended'
+      WHERE id = NEW.campaign_id AND status = 'active';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS trg_reports_auto_flag ON reports;
+CREATE TRIGGER trg_reports_auto_flag
+  AFTER INSERT ON reports
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_auto_flag_reports();
+
+
 -- ============================================================================
 -- 8. POLITIQUES : VERIFICATION_RECORDS (KYC)
 -- ============================================================================

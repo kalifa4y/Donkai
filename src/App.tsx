@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { AuthProvider } from './context/AuthContext'
 import { I18nProvider } from './lib/i18n'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
-import { HomePage } from './pages/HomePage'
-import { CampaignPage } from './pages/CampaignPage'
-import { CreatorProfilePage } from './pages/CreatorProfilePage'
-import { CreateCampaignPage } from './pages/CreateCampaignPage'
-import { LoginPage } from './pages/LoginPage'
-import { OnboardingPage } from './pages/OnboardingPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { SettingsPage } from './pages/SettingsPage'
-import { AdminPage } from './pages/AdminPage'
+
+const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
+const CampaignPage = lazy(() => import('./pages/CampaignPage').then((m) => ({ default: m.CampaignPage })))
+const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage').then((m) => ({ default: m.CreatorProfilePage })))
+const CreateCampaignPage = lazy(() => import('./pages/CreateCampaignPage').then((m) => ({ default: m.CreateCampaignPage })))
+const LoginPage = lazy(() => import('./pages/LoginPage').then((m) => ({ default: m.LoginPage })))
+const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then((m) => ({ default: m.OnboardingPage })))
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
 
 export const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
@@ -116,7 +117,17 @@ export const App: React.FC = () => {
       <AuthProvider>
         <div className="min-h-screen flex flex-col bg-[#faf9f6] dark:bg-[#0c0d12] text-gray-900 dark:text-zinc-100 transition-colors duration-200">
           <Navbar onNavigate={navigate} />
-          <main className="flex-1">{renderRoute()}</main>
+          <main className="flex-1">
+            <Suspense
+              fallback={
+                <div className="min-h-[50vh] flex items-center justify-center">
+                  <div className="w-8 h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+                </div>
+              }
+            >
+              {renderRoute()}
+            </Suspense>
+          </main>
           <Footer onNavigate={navigate} />
         </div>
       </AuthProvider>

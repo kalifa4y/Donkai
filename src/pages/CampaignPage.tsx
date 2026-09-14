@@ -13,6 +13,7 @@ import {
   Flag,
   ChevronLeft,
   Heart,
+  X,
 } from '../components/Icons'
 
 interface CampaignPageProps {
@@ -28,6 +29,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
   const [error, setError] = useState<string | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
   const [reportModalOpen, setReportModalOpen] = useState(false)
+  const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
 
   const formatFcfa = (val: number): string => {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -178,6 +180,13 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
 
   useEffect(() => {
     loadData()
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('payment') === 'success') {
+        setPaymentSuccessToast(true)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
   }, [username, slug])
 
   const handleDonationSuccess = (newDonation: Donation) => {
@@ -260,6 +269,33 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
           </button>
         </div>
       </div>
+
+      {/* Bannière de confirmation de paiement réussi */}
+      {paymentSuccessToast && (
+        <div className="bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl p-4 sm:p-5 flex items-start sm:items-center justify-between gap-4 shadow-sm">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-emerald-950 dark:text-emerald-200">
+                Paiement validé avec succès
+              </h3>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400 mt-0.5">
+                Votre contribution SasPay a bien été enregistrée et la collecte a été actualisée. Merci pour votre générosité.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setPaymentSuccessToast(false)}
+            aria-label="Fermer la notification"
+            className="text-emerald-700 dark:text-emerald-400 hover:text-emerald-950 dark:hover:text-emerald-200 p-1.5 rounded-lg hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 transition-colors shrink-0 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Alerte si suspendue ou expirée */}
       {campaign.status === 'suspended' && (

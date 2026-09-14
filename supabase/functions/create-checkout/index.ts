@@ -147,28 +147,43 @@ Deno.serve(async (req) => {
       })
 
       const saspayData = await saspayRes.json()
+      const session = saspayData?.data || saspayData
+      const checkoutUrl = session?.checkout_url
+      const sessionId = session?.id
 
-      if (saspayRes.ok && saspayData.checkout_url) {
+      if (saspayRes.ok && checkoutUrl) {
         await supabase
           .from('donations')
-          .update({ payment_session_id: saspayData.id })
+          .update({ payment_session_id: sessionId })
           .eq('id', donation.id)
 
         return new Response(
           JSON.stringify({
-            checkout_url: saspayData.checkout_url,
+            checkout_url: checkoutUrl,
             donation_id: donation.id,
           }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
+
+      console.error('SasPay checkout session creation failed:', saspayData)
+      return new Response(
+        JSON.stringify({
+          error:
+            saspayData?.error?.detail ||
+            saspayData?.message ||
+            'Erreur lors de l’initialisation de la session de paiement SasPay',
+        }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
-    // Si aucune clé secrète marchande n'est active en local, confirmation directe
+    // Si aucune clé secrète marchande n'est active (développement local sans SasPay)
     return new Response(
       JSON.stringify({
         donation_id: donation.id,
         status: 'pending',
+        is_local_demo: true,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
