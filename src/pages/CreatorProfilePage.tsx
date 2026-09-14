@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Profile, Campaign } from '../types'
 import {
-  CheckCircle2,
   AlertCircle,
   Copy,
   Check,
   ArrowRight,
 } from '../components/Icons'
+import { VerifiedBadge } from '../components/VerifiedBadge'
 
 interface CreatorProfilePageProps {
   username: string
@@ -190,10 +190,7 @@ export const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({ username
                   {profile.display_name}
                 </h1>
                 {profile.verification_status === 'verified' && (
-                  <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-900/50">
-                    <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Identité vérifiée</span>
-                  </span>
+                  <VerifiedBadge size="md" showText={false} />
                 )}
               </div>
               <p className="text-xs font-bold text-orange-600 dark:text-orange-400 font-mono mt-0.5">@{profile.username}</p>
@@ -259,15 +256,27 @@ export const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({ username
                 <div
                   key={c.id}
                   onClick={() => onNavigate(`/@${profile.username}/${c.slug}`)}
-                  className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs hover:shadow-md transition-all p-6 space-y-4 cursor-pointer group flex flex-col justify-between"
+                  className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs hover:shadow-md transition-all overflow-hidden cursor-pointer group flex flex-col justify-between"
                 >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-orange-600 dark:text-orange-400">
-                        {c.status === 'active' ? 'En cours' : 'Terminée'}
-                      </span>
-                      <span className="font-mono text-gray-400 dark:text-zinc-500">@{profile.username}/{c.slug}</span>
+                  {c.cover_image_url && (
+                    <div className="w-full h-36 sm:h-40 overflow-hidden bg-gray-100 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800">
+                      <img
+                        src={c.cover_image_url}
+                        alt={c.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
                     </div>
+                  )}
+
+                  <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-bold text-orange-600 dark:text-orange-400">
+                          {c.status === 'active' ? 'En cours' : 'Terminée'}
+                        </span>
+                        <span className="font-mono text-gray-400 dark:text-zinc-500">@{profile.username}/{c.slug}</span>
+                      </div>
 
                     <h3 className="text-lg font-extrabold text-gray-950 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2">
                       {c.title}
@@ -307,8 +316,9 @@ export const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({ username
                     </div>
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            )
+          })}
           </div>
         )}
       </div>

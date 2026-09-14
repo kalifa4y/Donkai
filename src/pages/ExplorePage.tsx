@@ -4,19 +4,20 @@ import {
   Search,
   Compass,
   Users,
-  CheckCircle2,
   TrendingUp,
   Clock,
   ArrowRight,
   Loader2,
   AlertCircle,
 } from '../components/Icons'
+import { VerifiedBadge } from '../components/VerifiedBadge'
 
 interface ExploreCampaign {
   id: string
   title: string
   slug: string
   description: string
+  cover_image_url?: string | null
   goal_amount: number
   collected_amount: number
   contributions_count: number
@@ -56,6 +57,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ onNavigate }) => {
           title,
           slug,
           description,
+          cover_image_url,
           goal_amount,
           collected_amount,
           contributions_count,
@@ -232,39 +234,60 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ onNavigate }) => {
                   <div
                     key={c.id}
                     onClick={() => onNavigate(campaignUrl)}
-                    className="group bg-white dark:bg-[#12131a] rounded-3xl p-6 border border-gray-100 dark:border-zinc-800/80 hover:border-orange-500/50 dark:hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-950/5 transition-all flex flex-col justify-between cursor-pointer"
+                    className="group bg-white dark:bg-[#12131a] rounded-3xl border border-gray-100 dark:border-zinc-800/80 hover:border-orange-500/50 dark:hover:border-orange-500/40 hover:shadow-xl hover:shadow-orange-950/5 transition-all overflow-hidden flex flex-col justify-between cursor-pointer"
                   >
-                    <div className="space-y-4">
-                      {/* En-tête de la carte créateur */}
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 flex items-center justify-center font-bold text-sm">
-                          {(c.profiles?.display_name || username).slice(0, 2).toUpperCase()}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-xs text-gray-900 dark:text-white truncate">
-                              {c.profiles?.display_name || username}
-                            </span>
-                            {c.profiles?.verification_status === 'verified' && (
-                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    {/* Affiche ou photo de couverture si disponible */}
+                    {c.cover_image_url && (
+                      <div className="w-full h-40 overflow-hidden bg-gray-100 dark:bg-zinc-800 border-b border-gray-100 dark:border-zinc-800">
+                        <img
+                          src={c.cover_image_url}
+                          alt={c.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+
+                    <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
+                      <div className="space-y-4">
+                        {/* En-tête de la carte créateur */}
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-orange-100 dark:bg-orange-950/60 text-orange-700 dark:text-orange-300 flex items-center justify-center font-bold text-sm shrink-0">
+                            {c.profiles?.avatar_url ? (
+                              <img
+                                src={c.profiles.avatar_url}
+                                alt={c.profiles.display_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              (c.profiles?.display_name || username).slice(0, 2).toUpperCase()
                             )}
                           </div>
-                          <span className="text-[11px] text-gray-500 dark:text-zinc-400">
-                            @{username}
-                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-bold text-xs text-gray-900 dark:text-white truncate">
+                                {c.profiles?.display_name || username}
+                              </span>
+                              {c.profiles?.verification_status === 'verified' && (
+                                <VerifiedBadge size="sm" showText={false} />
+                              )}
+                            </div>
+                            <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+                              @{username}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Titre & description */}
+                        <div>
+                          <h3 className="font-heading font-bold text-base sm:text-lg text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2 leading-snug">
+                            {c.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 dark:text-zinc-400 line-clamp-3 mt-1.5 leading-relaxed">
+                            {c.description}
+                          </p>
                         </div>
                       </div>
-
-                      {/* Titre & description */}
-                      <div>
-                        <h3 className="font-heading font-bold text-base sm:text-lg text-gray-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors line-clamp-2 leading-snug">
-                          {c.title}
-                        </h3>
-                        <p className="text-xs text-gray-500 dark:text-zinc-400 line-clamp-3 mt-1.5 leading-relaxed">
-                          {c.description}
-                        </p>
-                      </div>
-                    </div>
 
                     {/* Progression & Montants */}
                     <div className="mt-6 pt-5 border-t border-gray-100 dark:border-zinc-800/80 space-y-3">
@@ -298,8 +321,9 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ onNavigate }) => {
                       </div>
                     </div>
                   </div>
-                )
-              })}
+                </div>
+              )
+            })}
             </div>
           )}
         </>

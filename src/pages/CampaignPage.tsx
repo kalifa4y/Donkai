@@ -4,6 +4,7 @@ import type { Campaign, Donation } from '../types'
 import { DonationCard } from '../components/DonationCard'
 import { ShareModal } from '../components/ShareModal'
 import { ReportModal } from '../components/ReportModal'
+import { VerifiedBadge } from '../components/VerifiedBadge'
 import {
   Share2,
   AlertCircle,
@@ -354,19 +355,24 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
           <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-6">
             {/* En-tête Organisateur / Bénéficiaire */}
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
-              <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-extrabold text-base shadow-xs">
-                {(campaign.profile?.display_name || username).slice(0, 2).toUpperCase()}
+              <div className="w-12 h-12 rounded-2xl overflow-hidden bg-orange-600 text-white flex items-center justify-center font-extrabold text-base shadow-xs shrink-0">
+                {campaign.profile?.avatar_url ? (
+                  <img
+                    src={campaign.profile.avatar_url}
+                    alt={campaign.profile?.display_name || username}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  (campaign.profile?.display_name || username).slice(0, 2).toUpperCase()
+                )}
               </div>
               <div>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-sm font-extrabold text-gray-950 dark:text-white">
                     {campaign.profile?.display_name || username}
                   </span>
                   {campaign.profile?.verification_status === 'verified' && (
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>Identité vérifiée</span>
-                    </span>
+                    <VerifiedBadge size="sm" showText={false} />
                   )}
                 </div>
                 <p className="text-xs text-gray-500 dark:text-zinc-400">
@@ -374,6 +380,18 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
                 </p>
               </div>
             </div>
+
+            {/* Photo / Affiche réelle de la collecte si présente */}
+            {campaign.cover_image_url && (
+              <div className="w-full rounded-2xl overflow-hidden border border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-900 shadow-xs">
+                <img
+                  src={campaign.cover_image_url}
+                  alt={campaign.title}
+                  className="w-full h-auto max-h-[380px] object-cover"
+                  loading="eager"
+                />
+              </div>
+            )}
 
             {/* Titre et description */}
             <div className="space-y-3">

@@ -13,6 +13,8 @@ import {
   ArrowRight,
   Info,
 } from '../components/Icons'
+import { ImageUploadField } from '../components/ImageUploadField'
+import { VerifiedBadge } from '../components/VerifiedBadge'
 
 interface SettingsPageProps {
   onNavigate: (path: string) => void
@@ -40,6 +42,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
   const { user, profile, refreshProfile, loading: authLoading } = useAuth()
 
   const [displayName, setDisplayName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [bio, setBio] = useState('')
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [walletProvider, setWalletProvider] = useState<WalletProvider>('orange')
@@ -59,6 +62,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
       onNavigate('/login')
     } else if (profile) {
       setDisplayName(profile.display_name || '')
+      setAvatarUrl(profile.avatar_url || null)
       setBio(profile.bio || '')
       setWalletProvider(profile.wallet_provider || 'orange')
       setWalletNumber(profile.wallet_number || '')
@@ -69,6 +73,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
         try {
           const parsed = JSON.parse(savedLocal)
           if (parsed.whatsapp_number) setWhatsappNumber(parsed.whatsapp_number)
+          if (parsed.avatar_url && !profile.avatar_url) setAvatarUrl(parsed.avatar_url)
         } catch {
           // ignore
         }
@@ -112,6 +117,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
 
       const updates: Record<string, unknown> = {
         display_name: displayName.trim() || profile.username,
+        avatar_url: avatarUrl || null,
         bio: finalBio || null,
         updated_at: new Date().toISOString(),
       }
@@ -248,6 +254,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
           <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
             Profil public & Contact
           </h2>
+
+          {/* Photo de profil avec conseil TikTok / Instagram */}
+          <div className="pb-3 border-b border-gray-100 dark:border-zinc-800">
+            <ImageUploadField
+              label="Photo de profil"
+              value={avatarUrl}
+              onChange={setAvatarUrl}
+              aspectRatio="square"
+              maxDimension={400}
+              quality={0.85}
+              helperText="Conseil créateur : Choisissez la même photo de profil que sur votre compte TikTok ou Instagram pour que vos abonnés et spectateurs vous reconnaissent instantanément."
+            />
+          </div>
 
           <div>
             <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
@@ -390,18 +409,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onNavigate }) => {
             </h2>
           </div>
           {profile.verification_status === 'verified' ? (
-            <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-full border border-emerald-200 dark:border-emerald-900/50">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Profil vérifié</span>
-            </span>
+            <div className="inline-flex items-center gap-1.5 bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 text-xs font-bold px-3 py-1 rounded-full border border-sky-200 dark:border-sky-800/60">
+              <VerifiedBadge size="sm" />
+              <span>Badge Vérifié Officiel</span>
+            </div>
           ) : (
-            <span className="text-xs font-bold text-gray-400 dark:text-zinc-500">Non vérifié</span>
+            <span className="text-xs font-bold text-gray-400 dark:text-zinc-500">Badge non attribué</span>
           )}
         </div>
 
         {profile.verification_status === 'verified' ? (
           <p className="text-xs text-gray-600 dark:text-zinc-400 leading-relaxed">
-            Votre identité a été validée par nos équipes. Vos collectes bénéficient du badge officiel de confiance "Identité vérifiée" et sont exemptes de plafonds de retrait.
+            Félicitations ! Votre compte a reçu le <strong>badge bleu officiel Donkai</strong> après validation de votre pièce d'identité par nos équipes. Ce badge est 100% gratuit et atteste de votre authenticité sur toutes vos collectes.
           </p>
         ) : kycSubmitted ? (
           <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 rounded-2xl text-xs text-emerald-900 dark:text-emerald-300 space-y-1">

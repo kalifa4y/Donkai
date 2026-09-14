@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   Sparkles,
 } from '../components/Icons'
+import { ImageUploadField } from '../components/ImageUploadField'
 
 interface CreateCampaignPageProps {
   onNavigate: (path: string) => void
@@ -37,6 +38,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
   const [category, setCategory] = useState(CATEGORIES[0])
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
+  const [coverImageUrl, setCoverImageUrl] = useState<string | null>(null)
 
   // Étape 2 : Objectif & Bénéficiaire
   const [goalAmount, setGoalAmount] = useState<number | ''>(500000)
@@ -229,6 +231,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
           title: title.trim(),
           slug: cleanSlug,
           description: description.trim(),
+          cover_image_url: coverImageUrl || null,
           goal_amount: numGoal,
           currency: 'XOF',
           status: 'active',
@@ -405,6 +408,29 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Expliquez en détail pourquoi cette initiative est importante, à quoi serviront les fonds collectés et qui en bénéficiera..."
                 className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-3 px-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600 resize-none leading-relaxed"
+              />
+            </div>
+
+            {/* Photo ou Affiche de la collecte */}
+            <div>
+              <ImageUploadField
+                label="Affiche ou Photo du projet"
+                value={coverImageUrl}
+                onChange={setCoverImageUrl}
+                aspectRatio="banner"
+                maxDimension={1200}
+                quality={0.82}
+                helperText={
+                  [
+                    'Solidarité & Entraide',
+                    'Santé & Urgence médicale',
+                    'Eau & Infrastructure',
+                    'Éducation & Enfance',
+                    'Projet Communautaire',
+                  ].includes(category)
+                    ? "Exigence d'authenticité (Associations & Causes) : Fournissez une vraie photo de terrain ou de votre structure. Les images générées par IA sont proscrites sur les causes humanitaires car elles éveillent la méfiance des donateurs."
+                    : "Pour les créateurs & projets culturels : Vous pouvez importer votre affiche officielle, pochette, visuel conceptuel ou photo d'équipe (les visuels graphiques sont acceptés)."
+                }
               />
             </div>
 
