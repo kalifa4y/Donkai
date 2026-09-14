@@ -2,6 +2,7 @@ import React from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../lib/i18n'
 import { Wallet, LogOut, Compass, Globe } from './Icons'
+import { ShieldCheck } from 'lucide-react'
 
 interface NavbarProps {
   onNavigate: (path: string) => void
@@ -9,7 +10,7 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath = '/' }) => {
-  const { user, signOut } = useAuth()
+  const { user, profile, signOut } = useAuth()
   const { language, setLanguage, t } = useI18n()
 
   const toggleLanguage = () => {
@@ -18,6 +19,16 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath = '/' })
 
   const isHome = currentPath === '/'
   const isExplore = currentPath === '/explore'
+  const isAdmin = currentPath === '/admin'
+  const isDashboard = currentPath === '/dashboard'
+
+  const handleSignOut = async () => {
+    try {
+      await signOut()
+    } finally {
+      onNavigate('/')
+    }
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0c0d12]/95 backdrop-blur-md border-b border-gray-100 dark:border-zinc-800 transition-colors">
@@ -39,7 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath = '/' })
             </div>
           </button>
 
-          {/* Onglets principaux : Accueil & Explorer uniquement */}
+          {/* Onglets principaux : Accueil, Explorer & Admin si profil administrateur */}
           <nav className="flex items-center gap-1.5 text-xs font-bold text-gray-600 dark:text-zinc-400">
             <button
               type="button"
@@ -65,6 +76,22 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath = '/' })
               <Compass className="w-3.5 h-3.5" />
               <span>Explorer</span>
             </button>
+
+            {/* Onglet Admin visible uniquement pour l'administrateur */}
+            {profile?.is_admin && (
+              <button
+                type="button"
+                onClick={() => onNavigate('/admin')}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl transition-all cursor-pointer ${
+                  isAdmin
+                    ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 font-extrabold border border-red-200/60 dark:border-red-800/40'
+                    : 'text-amber-600 dark:text-amber-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-amber-50/60 dark:hover:bg-zinc-800/60'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5 text-red-500" />
+                <span>Administration</span>
+              </button>
+            )}
           </nav>
         </div>
 
@@ -83,23 +110,36 @@ export const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath = '/' })
 
           {user ? (
             <div className="flex items-center gap-2">
+              {profile?.is_admin && (
+                <button
+                  type="button"
+                  onClick={() => onNavigate('/admin')}
+                  title="Accéder au panneau d'administration"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-red-600 dark:text-red-400 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-xl transition-colors border border-red-200/50 dark:border-red-900/40 cursor-pointer"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Admin</span>
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => onNavigate('/dashboard')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-800 dark:text-zinc-200 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 rounded-xl transition-colors cursor-pointer"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-colors cursor-pointer ${
+                  isDashboard
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-gray-800 dark:text-zinc-200 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700'
+                }`}
               >
-                <Wallet className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+                <Wallet className={`w-3.5 h-3.5 ${isDashboard ? 'text-white' : 'text-orange-600 dark:text-orange-400'}`} />
                 <span>{t('nav.dashboard') || 'Tableau de bord'}</span>
               </button>
 
               <button
                 type="button"
-                onClick={async () => {
-                  await signOut()
-                  onNavigate('/')
-                }}
+                onClick={handleSignOut}
                 title={t('nav.logout') || 'Déconnexion'}
-                className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded-xl transition-colors cursor-pointer"
+                className="p-2 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-xl transition-colors cursor-pointer"
               >
                 <LogOut className="w-4 h-4" />
               </button>

@@ -49,8 +49,14 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ onNavigate }) => {
   const loadCampaigns = async () => {
     setLoading(true)
     setError(null)
+
+    // Watchdog de sécurité : interrompt le spinner après 6 secondes si le réseau est bloqué
+    const timeoutPromise = new Promise<{ data: any[] | null; error: any }>((_, reject) =>
+      setTimeout(() => reject(new Error('Délai de connexion dépassé (timeout).')), 6000)
+    )
+
     try {
-      const { data, error: fetchErr } = await supabase
+      const fetchPromise = supabase
         .from('campaigns')
         .select(`
           id,
@@ -73,6 +79,8 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ onNavigate }) => {
         .eq('status', 'active')
         .order('collected_amount', { ascending: false })
 
+      const { data, error: fetchErr } = await Promise.race([fetchPromise, timeoutPromise])
+
       if (fetchErr) throw fetchErr
 
       // Formater pour TypeScript (profiles pouvant être un objet ou un tableau selon le join PostgREST)
@@ -84,7 +92,7 @@ export const ExplorePage: React.FC<ExplorePageProps> = ({ onNavigate }) => {
       setCampaigns(formatted)
     } catch (err) {
       console.error('Erreur chargement exploration:', err)
-      setError("Impossible de charger les collectes actuellement. Veuillez rafraîchir la page.")
+      setError("Impossible de charger les collectes en direct actuellement. Veuillez vérifier votre connexion.")
     } finally {
       setLoading(false)
     }

@@ -67,55 +67,73 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const loadData = async () => {
     setLoading(true)
 
+    // Watchdog de sécurité : 5 secondes max pour éviter tout blocage du dashboard
+    const timeoutPromise = new Promise<{ isTimeout: boolean }>((resolve) =>
+      setTimeout(() => resolve({ isTimeout: true }), 5000)
+    )
+
     try {
-      let currentUserId = profile?.id
+      const fetchDataPromise = (async () => {
+        let currentUserId = profile?.id
 
-      if (!currentUserId && user) {
-        const { data: prof } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('clerk_user_id', user.id)
-          .maybeSingle()
-        if (prof) currentUserId = prof.id
-      }
+        if (!currentUserId && user) {
+          const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)
+          const filters: string[] = []
+          if (isUUID) filters.push(`id.eq.${user.id}`)
+          if (user.id) filters.push(`clerk_user_id.eq.${user.id}`)
+          if (user.email) filters.push(`email.eq.${user.email}`)
 
-      if (currentUserId) {
-        // 1. Collectes créées
-        const { data: camps } = await supabase
-          .from('campaigns')
-          .select('*')
-          .eq('user_id', currentUserId)
-          .order('created_at', { ascending: false })
-
-        setCampaigns(camps || [])
-
-        // 2. Dons associés à ces collectes
-        const campaignIds = (camps || []).map((c) => c.id)
-        if (campaignIds.length > 0) {
-          const { data: dons } = await supabase
-            .from('donations')
-            .select('*')
-            .in('campaign_id', campaignIds)
-            .order('created_at', { ascending: false })
-
-          setDonations(dons || [])
-        } else {
-          setDonations([])
+          if (filters.length > 0) {
+            const { data: prof } = await supabase
+              .from('profiles')
+              .select('id')
+              .or(filters.join(','))
+              .maybeSingle()
+            if (prof) currentUserId = prof.id
+          }
         }
 
-        // 3. Demandes de retrait
-        const { data: pays } = await supabase
-          .from('payouts')
-          .select('*')
-          .eq('user_id', currentUserId)
-          .order('created_at', { ascending: false })
+        if (currentUserId) {
+          // 1. Collectes créées
+          const { data: camps } = await supabase
+            .from('campaigns')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .order('created_at', { ascending: false })
 
-        setPayouts(pays || [])
-      } else {
-        // Chargement démo locale
-        const localCampaigns = JSON.parse(localStorage.getItem('donkai_local_campaigns') || '[]')
-        setCampaigns(localCampaigns)
-      }
+          setCampaigns(camps || [])
+
+          // 2. Dons associés à ces collectes
+          const campaignIds = (camps || []).map((c) => c.id)
+          if (campaignIds.length > 0) {
+            const { data: dons } = await supabase
+              .from('donations')
+              .select('*')
+              .in('campaign_id', campaignIds)
+              .order('created_at', { ascending: false })
+
+            setDonations(dons || [])
+          } else {
+            setDonations([])
+          }
+
+          // 3. Demandes de retrait
+          const { data: pays } = await supabase
+            .from('payouts')
+            .select('*')
+            .eq('user_id', currentUserId)
+            .order('created_at', { ascending: false })
+
+          setPayouts(pays || [])
+        } else {
+          // Chargement local de secours si aucun profil distant
+          const localCampaigns = JSON.parse(localStorage.getItem('donkai_local_campaigns') || '[]')
+          setCampaigns(localCampaigns)
+        }
+        return { isTimeout: false }
+      })()
+
+      await Promise.race([fetchDataPromise, timeoutPromise])
     } catch (err) {
       console.error('Erreur chargement données dashboard:', err)
     } finally {

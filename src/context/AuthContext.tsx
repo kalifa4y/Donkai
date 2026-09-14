@@ -45,6 +45,9 @@ function mapSupabaseUser(su: SupabaseUser): AuthUser {
   }
 }
 
+const isUUID = (str: string): boolean =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str)
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -53,14 +56,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchProfile = async (userId: string, email?: string | null) => {
     try {
-      // Recherche par id ou clerk_user_id ou email
       let query = supabase.from('profiles').select('*')
+      const filters: string[] = []
+
+      // Seuls les UUIDs valides peuvent interroger la colonne id (de type UUID dans Postgres)
+      if (isUUID(userId)) {
+        filters.push(`id.eq.${userId}`)
+      }
+      if (userId) {
+        filters.push(`clerk_user_id.eq.${userId}`)
+      }
       if (email) {
-        query = query.or(`id.eq.${userId},clerk_user_id.eq.${userId},email.eq.${email}`)
-      } else {
-        query = query.or(`id.eq.${userId},clerk_user_id.eq.${userId}`)
+        filters.push(`email.eq.${email}`)
       }
 
+      if (filters.length === 0) {
+        setProfile(null)
+        return
+      }
+
+      query = query.or(filters.join(','))
       const { data, error } = await query.maybeSingle()
 
       if (error) {
@@ -84,59 +99,85 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   useEffect(() => {
-    // 1. Récupération de la session initiale
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const authU = mapSupabaseUser(session.user)
-        setUser(authU)
-        fetchProfile(session.user.id, session.user.email).finally(() => {
-          setLoading(false)
-        })
-      } else {
-        // Vérifier si un utilisateur dev local existe
-        const savedDev = localStorage.getItem('donkai_dev_user')
-        if (savedDev) {
-          try {
-            const devU = JSON.parse(savedDev) as AuthUser
-            setUser(devU)
-            fetchProfile(devU.id, devU.email).finally(() => {
-              setLoading(false)
-            })
-          } catch {
+    let isMounted = true
+
+    // Watchdog : sécurité absolue pour que l'application ne reste JAMAIS bloquée sur un loader
+    const watchdogTimer = setTimeout(() => {
+      if (isMounted) {
+        setLoading(false)
+      }
+    }, 2500)
+
+    // 1. Récupération de la session active (sessionStorage)
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        if (!isMounted) return
+        clearTimeout(watchdogTimer)
+
+        if (session?.user) {
+          const authU = mapSupabaseUser(session.user)
+          setUser(authU)
+          fetchProfile(session.user.id, session.user.email).finally(() => {
+            if (isMounted) setLoading(false)
+          })
+        } else {
+          // Vérifier session dev temporaire liée à l'onglet (sessionStorage)
+          const savedDev = sessionStorage.getItem('donkai_dev_user')
+          if (savedDev) {
+            try {
+              const devU = JSON.parse(savedDev) as AuthUser
+              setUser(devU)
+              fetchProfile(devU.id, devU.email).finally(() => {
+                if (isMounted) setLoading(false)
+              })
+            } catch {
+              setUser(null)
+              setProfile(null)
+              if (isMounted) setLoading(false)
+            }
+          } else {
             setUser(null)
             setProfile(null)
-            setLoading(false)
+            if (isMounted) setLoading(false)
           }
-        } else {
-          setUser(null)
-          setProfile(null)
+        }
+      })
+      .catch((err) => {
+        console.warn('Erreur récupération session initiale :', err)
+        if (isMounted) {
+          clearTimeout(watchdogTimer)
           setLoading(false)
         }
+      })
+
+    // 2. Écoute réactive des changements d'authentification Supabase
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return
+
+      if (event === 'SIGNED_OUT' || !session) {
+        // Déconnexion ou expiration de session
+        const savedDev = sessionStorage.getItem('donkai_dev_user')
+        if (!savedDev) {
+          startTransition(() => {
+            setUser(null)
+            setProfile(null)
+          })
+        }
+      } else if (session?.user) {
+        const authU = mapSupabaseUser(session.user)
+        startTransition(() => {
+          setUser(authU)
+        })
+        await fetchProfile(session.user.id, session.user.email)
       }
     })
 
-    // 2. Écoute réactive des changements d'authentification Supabase
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (session?.user) {
-          const authU = mapSupabaseUser(session.user)
-          startTransition(() => {
-            setUser(authU)
-          })
-          await fetchProfile(session.user.id, session.user.email)
-        } else {
-          const savedDev = localStorage.getItem('donkai_dev_user')
-          if (!savedDev) {
-            startTransition(() => {
-              setUser(null)
-              setProfile(null)
-            })
-          }
-        }
-      }
-    )
-
     return () => {
+      isMounted = false
+      clearTimeout(watchdogTimer)
       subscription.unsubscribe()
     }
   }, [])
@@ -198,15 +239,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: error ? new Error(error.message) : null }
   }
 
-  // Déconnexion
+  // Déconnexion propre et garantie inconditionnellement
   const signOut = async () => {
-    await supabase.auth.signOut()
-    localStorage.removeItem('donkai_dev_user')
-    setUser(null)
-    setProfile(null)
+    try {
+      await supabase.auth.signOut({ scope: 'local' })
+    } catch (err) {
+      console.warn('Erreur signOut Supabase (nettoyage local immédiat) :', err)
+    } finally {
+      try {
+        sessionStorage.clear()
+        localStorage.removeItem('donkai_dev_user')
+        // Nettoyage de tout token persistant obsolète
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+            localStorage.removeItem(key)
+          }
+        })
+      } catch {
+        // Ignorer les erreurs d'accès au storage
+      }
+      startTransition(() => {
+        setUser(null)
+        setProfile(null)
+      })
+    }
   }
 
-  // Connexion instantanée de test / dev rapide
+  // Connexion instantanée de test / dev rapide (strictement liée à l'onglet en cours)
   const devSignIn = async (email: string, username: string) => {
     const cleanUsername = username.toLowerCase().replace(/[^a-z0-9_]/g, '')
     const devU: AuthUser = {
@@ -215,7 +274,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       fullName: username,
       imageUrl: null,
     }
-    localStorage.setItem('donkai_dev_user', JSON.stringify(devU))
+    sessionStorage.setItem('donkai_dev_user', JSON.stringify(devU))
     setUser(devU)
 
     // Vérifier ou créer profil
@@ -229,7 +288,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setProfile(existing)
     } else {
       const newProf: Profile = {
-        id: devU.id,
+        id: crypto.randomUUID ? crypto.randomUUID() : 'cea7f212-cc04-4190-b7d4-e15f818e3794',
         clerk_user_id: devU.id,
         username: cleanUsername,
         display_name: username,

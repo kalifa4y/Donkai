@@ -7,5 +7,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Donkai: Supabase URL or anon key missing in environment variables.')
 }
 
-// Client Supabase officiel avec gestion native des sessions et de l'authentification
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Client Supabase officiel configuré avec sessionStorage :
+// la session est automatiquement détruite à la fermeture de l'onglet ou du navigateur
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+})
