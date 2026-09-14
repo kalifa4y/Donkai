@@ -185,7 +185,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold text-gray-500 dark:text-zinc-400 hover:bg-red-50 dark:hover:bg-red-950/30 hover:text-red-600 dark:hover:text-red-400 transition-colors border border-gray-200/80 dark:border-zinc-800 cursor-pointer"
         >
           <Lock className="w-3.5 h-3.5" />
-          <span>Verrouiller l'accès</span>
+          <span>Quitter la console</span>
         </button>
       </div>
     </div>

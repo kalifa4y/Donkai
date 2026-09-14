@@ -252,6 +252,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
 
         <div className="flex items-center gap-2">
+          {profile?.is_admin && (
+            <button
+              type="button"
+              onClick={() => onNavigate('/admin')}
+              className="inline-flex items-center gap-1.5 bg-zinc-900 hover:bg-black dark:bg-zinc-800 dark:hover:bg-zinc-700 text-white text-xs font-bold py-2.5 px-3.5 rounded-xl border border-zinc-700/80 transition-colors cursor-pointer shadow-xs"
+              title="Console d'Administration Système"
+            >
+              <ShieldCheck className="w-3.5 h-3.5 text-orange-400" />
+              <span>Console Système</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => onNavigate('/create')}
