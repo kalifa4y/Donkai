@@ -70,6 +70,13 @@ Pour chaque tâche, l'agent identifie la nature du travail et verrouille le work
 
 ---
 
-## 8. Communication & Style
+## 8. Déploiement & URL Unique Inviolable
+- **URL DE PRODUCTION UNIQUE ET ABSOLUE** : `https://donkai.vercel.app`
+- Aucun autre alias intermédiaire ou sous-domaine générique ne doit être présenté comme URL de référence.
+- Chaque déploiement de production doit immédiatement et obligatoirement pointer vers `https://donkai.vercel.app`.
+
+---
+
+## 9. Communication & Style
 - **Langue** : Français par défaut, ton direct, concis, technique et transparent.
 - **Zéro Emoji** : Bannissement absolu de tout emoji dans l'UI, le code, les logs, les commits et les réponses.
