@@ -52,4 +52,5 @@ export {
   Tv,
   Maximize2,
   Minimize2,
+  Coffee,
 } from 'lucide-react'

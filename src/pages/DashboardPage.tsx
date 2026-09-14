@@ -31,6 +31,7 @@ import {
   Share2,
   Radio,
   FileText,
+  Coffee,
 } from '../components/Icons'
 
 interface DashboardPageProps {
@@ -453,20 +454,50 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Bannière Kit Live & Stories */}
-                  <div className="p-4 bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-900/50 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                    <div className="flex items-center gap-2.5">
+                  {/* Bannières Outils Créateur : Kit Live & Lien Offrir un Thé */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Bannière Kit Live & Stories */}
+                    <div className="p-4 bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-900/50 rounded-2xl flex items-start gap-3 text-xs">
                       <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
                         <QrCode className="w-4 h-4" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-bold text-gray-900 dark:text-white">
-                          Kit Live TikTok & Stories WhatsApp
+                          Kit Live TikTok & Stories
                         </p>
-                        <p className="text-gray-600 dark:text-zinc-400 text-[11px] mt-0.5">
-                          Téléchargez l'affiche QR Code de votre collecte pour l'afficher pendant vos directs et encaisser via Mobile Money.
+                        <p className="text-gray-600 dark:text-zinc-400 text-[11px] mt-0.5 leading-relaxed">
+                          Affichez votre QR code en direct et lancez le mode plein écran sur vos streams.
                         </p>
                       </div>
+                    </div>
+
+                    {/* Bannière Lien Offrir un Thé pour bio */}
+                    <div className="p-4 bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/50 rounded-2xl flex items-start justify-between gap-3 text-xs">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 rounded-xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                          <Coffee className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            Micro-dons "Offrir un Thé"
+                          </p>
+                          <p className="text-gray-600 dark:text-zinc-400 text-[11px] mt-0.5 leading-relaxed">
+                            Lien direct pour votre bio TikTok & Instagram pour recevoir des thés (500 F - 5 000 F).
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyLink(`/@${profile?.username || 'user'}?tip=true`)}
+                        className="p-2 rounded-xl bg-white dark:bg-zinc-800 border border-amber-200 dark:border-zinc-700 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-zinc-700 transition-colors shrink-0 cursor-pointer"
+                        title="Copier le lien Offrir un Thé"
+                      >
+                        {copiedLink === `/@${profile?.username || 'user'}?tip=true` ? (
+                          <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                        ) : (
+                          <Copy className="w-4 h-4" />
+                        )}
+                      </button>
                     </div>
                   </div>
 
@@ -582,18 +613,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-                  {donations.map((d) => (
-                    <div key={d.id} className="py-4 flex items-center justify-between first:pt-0 last:pb-0 text-xs">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-900 dark:text-white text-sm">
-                            {d.is_anonymous ? 'Contributeur anonyme' : (d.donor_name || 'Anonyme')}
-                          </span>
-                          <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
-                            {d.status === 'paid' ? 'Validé' : d.status}
-                          </span>
-                        </div>
-                        {d.message && <p className="text-gray-600 dark:text-zinc-300 italic">"{d.message}"</p>}
+                  {donations.map((d) => {
+                    const isTea = d.campaign_id?.startsWith('creator-tips-') || d.id?.startsWith('tea-')
+                    return (
+                      <div key={d.id} className="py-4 flex items-center justify-between first:pt-0 last:pb-0 text-xs">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="font-bold text-gray-900 dark:text-white text-sm">
+                              {d.is_anonymous ? 'Contributeur anonyme' : (d.donor_name || 'Anonyme')}
+                            </span>
+                            {isTea && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/50 dark:border-amber-800/50">
+                                <Coffee className="w-2.5 h-2.5" />
+                                <span>Thé offert</span>
+                              </span>
+                            )}
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
+                              {d.status === 'paid' ? 'Validé' : d.status}
+                            </span>
+                          </div>
+                          {d.message && <p className="text-gray-600 dark:text-zinc-300 italic">"{d.message}"</p>}
                         <p className="text-[10px] text-gray-400 dark:text-zinc-500 mt-1">
                           {new Date(d.created_at).toLocaleDateString('fr-FR', {
                             day: 'numeric',
@@ -610,8 +649,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         </p>
                       </div>
                     </div>
-                  ))}
-                </div>
+                  )
+                })}
+              </div>
               )}
             </div>
           )}
