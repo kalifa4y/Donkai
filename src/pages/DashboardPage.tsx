@@ -7,6 +7,7 @@ import {
   type Payout,
   canUpdateWalletNumber,
 } from '../types'
+import { ShareModal } from '../components/ShareModal'
 import {
   Wallet,
   Copy,
@@ -25,6 +26,8 @@ import {
   CheckCircle2,
   Lock,
   Settings,
+  QrCode,
+  Share2,
 } from '../components/Icons'
 
 interface DashboardPageProps {
@@ -40,6 +43,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'campaigns' | 'donations' | 'payouts'>('campaigns')
   const [copiedLink, setCopiedLink] = useState<string | null>(null)
+  const [shareCampaign, setShareCampaign] = useState<Campaign | null>(null)
+  const [shareTab, setShareTab] = useState<'share' | 'qr'>('qr')
 
   // État modal de retrait
   const [payoutModalOpen, setPayoutModalOpen] = useState(false)
@@ -443,62 +448,106 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   </button>
                 </div>
               ) : (
-                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-                  {campaigns.map((c) => {
-                    const pct = Math.min(100, Math.round((c.collected_amount / c.goal_amount) * 100))
-                    const campaignUrl = `/@${profile?.username || 'user'}/${c.slug}`
-
-                    return (
-                      <div key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 first:pt-0 last:pb-0">
-                        <div className="space-y-1.5 max-w-md">
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-sm font-extrabold text-gray-900 dark:text-white">
-                              {c.title}
-                            </h4>
-                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
-                              {c.status === 'active' ? 'Active' : c.status}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
-                            <span>
-                              <strong className="text-gray-800 dark:text-zinc-200">{c.collected_amount.toLocaleString()} FCFA</strong> / {c.goal_amount.toLocaleString()} FCFA ({pct}%)
-                            </span>
-                            <span>•</span>
-                            <span>{c.contributions_count} soutiens</span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <button
-                            type="button"
-                            onClick={() => handleCopyLink(campaignUrl)}
-                            className="bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors flex items-center gap-1 cursor-pointer"
-                          >
-                            {copiedLink === campaignUrl ? (
-                              <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                            ) : (
-                              <Copy className="w-3 h-3" />
-                            )}
-                            <span>{copiedLink === campaignUrl ? 'Copié' : 'Copier lien'}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => onNavigate(campaignUrl)}
-                            className="bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/50 text-orange-700 dark:text-orange-300 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            <span>Voir</span>
-                          </button>
-                        </div>
+                <div className="space-y-4">
+                  {/* Bannière Kit Live & Stories */}
+                  <div className="p-4 bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-900/50 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                        <QrCode className="w-4 h-4" />
                       </div>
-                    )
-                  })}
+                      <div>
+                        <p className="font-bold text-gray-900 dark:text-white">
+                          Kit Live TikTok & Stories WhatsApp
+                        </p>
+                        <p className="text-gray-600 dark:text-zinc-400 text-[11px] mt-0.5">
+                          Téléchargez l'affiche QR Code de votre collecte pour l'afficher pendant vos directs et encaisser via Mobile Money.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+                    {campaigns.map((c) => {
+                      const pct = Math.min(100, Math.round((c.collected_amount / c.goal_amount) * 100))
+                      const campaignUrl = `/@${profile?.username || 'user'}/${c.slug}`
+
+                      return (
+                        <div key={c.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 first:pt-0 last:pb-0">
+                          <div className="space-y-1.5 max-w-md">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm font-extrabold text-gray-900 dark:text-white">
+                                {c.title}
+                              </h4>
+                              <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50">
+                                {c.status === 'active' ? 'Active' : c.status}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-zinc-400">
+                              <span>
+                                <strong className="text-gray-800 dark:text-zinc-200">{c.collected_amount.toLocaleString()} FCFA</strong> / {c.goal_amount.toLocaleString()} FCFA ({pct}%)
+                              </span>
+                              <span>•</span>
+                              <span>{c.contributions_count} soutiens</span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShareCampaign(c)
+                                setShareTab('qr')
+                              }}
+                              className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
+                              <span>Kit Live & QR</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShareCampaign(c)
+                                setShareTab('share')
+                              }}
+                              className="bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <Share2 className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+                              <span>Partager</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleCopyLink(campaignUrl)}
+                              className="bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              {copiedLink === campaignUrl ? (
+                                <Check className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                              ) : (
+                                <Copy className="w-3 h-3" />
+                              )}
+                              <span>{copiedLink === campaignUrl ? 'Copié' : 'Lien'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => onNavigate(campaignUrl)}
+                              className="bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                              <span>Voir</span>
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
           )}
+
 
           {/* Onglet 2 : Contributions reçues */}
           {activeTab === 'donations' && (
@@ -667,6 +716,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         </div>
       )}
+
+      {/* Modal de partage et Kit Live */}
+      {shareCampaign && (
+        <ShareModal
+          title={shareCampaign.title}
+          url={`${window.location.origin}/@${profile?.username || 'user'}/${shareCampaign.slug}`}
+          defaultTab={shareTab}
+          onClose={() => setShareCampaign(null)}
+        />
+      )}
     </div>
   )
 }
+
+

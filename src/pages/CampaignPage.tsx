@@ -14,6 +14,9 @@ import {
   ChevronLeft,
   Heart,
   X,
+  MessageSquare,
+  Sparkles,
+  QrCode,
 } from '../components/Icons'
 
 interface CampaignPageProps {
@@ -28,8 +31,42 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
+  const [shareModalDefaultTab, setShareModalDefaultTab] = useState<'share' | 'qr'>('share')
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
+  const [feedFilter, setFeedFilter] = useState<'all' | 'messages'>('all')
+  const [likedDonations, setLikedDonations] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('donkai_liked_donations') || '{}')
+    } catch {
+      return {}
+    }
+  })
+
+  const toggleLikeDonation = (id: string) => {
+    setLikedDonations((prev) => {
+      const updated = { ...prev, [id]: !prev[id] }
+      try {
+        localStorage.setItem('donkai_liked_donations', JSON.stringify(updated))
+      } catch {
+        // Ignorer si indisponible
+      }
+      return updated
+    })
+  }
+
+  const getAvatarColors = (name: string) => {
+    const palettes = [
+      'from-orange-500 to-amber-500 text-white',
+      'from-emerald-500 to-teal-500 text-white',
+      'from-blue-500 to-indigo-500 text-white',
+      'from-violet-500 to-purple-500 text-white',
+      'from-rose-500 to-pink-500 text-white',
+    ]
+    let hash = 0
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i)
+    return palettes[hash % palettes.length]
+  }
 
   const formatFcfa = (val: number): string => {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -360,51 +397,157 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
             )}
           </div>
 
-          {/* Mur des soutiens et messages */}
-          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-4 text-left">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
-              <h3 className="text-sm font-extrabold text-gray-950 dark:text-white flex items-center gap-2 font-heading">
-                <Heart className="w-4 h-4 text-orange-600 fill-orange-500" />
-                <span>Contributions récentes</span>
-              </h3>
-              <span className="text-xs font-semibold text-gray-400 dark:text-zinc-500">
-                {donations.length} soutien{donations.length > 1 ? 's' : ''}
-              </span>
+          {/* Mur des soutiens et messages enrichi */}
+          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-5 text-left">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                  <Heart className="w-4 h-4 fill-orange-500" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-extrabold text-gray-950 dark:text-white font-heading">
+                    Mur des soutiens
+                  </h3>
+                  <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                    {donations.length} contribution{donations.length > 1 ? 's' : ''} au total
+                  </p>
+                </div>
+              </div>
+
+              {/* Filtres Tous / Avec message */}
+              <div className="flex items-center gap-1.5 p-1 bg-gray-100/80 dark:bg-zinc-900 rounded-xl text-xs font-bold self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setFeedFilter('all')}
+                  className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    feedFilter === 'all'
+                      ? 'bg-white dark:bg-zinc-800 text-orange-600 dark:text-orange-400 shadow-2xs'
+                      : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Tous ({donations.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFeedFilter('messages')}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                    feedFilter === 'messages'
+                      ? 'bg-white dark:bg-zinc-800 text-orange-600 dark:text-orange-400 shadow-2xs'
+                      : 'text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  <MessageSquare className="w-3 h-3" />
+                  <span>Messages ({donations.filter((d) => Boolean(d.message && d.message.trim().length > 0)).length})</span>
+                </button>
+              </div>
             </div>
 
-            {donations.length === 0 ? (
-              <p className="text-xs text-gray-400 dark:text-zinc-500 py-6 text-center">
-                Soyez le premier à soutenir cette collecte !
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {donations.map((d) => (
-                  <div key={d.id} className="p-4 rounded-2xl bg-gray-50/80 dark:bg-[#181b29] border border-gray-100 dark:border-zinc-800 text-xs">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-gray-950 dark:text-white">
-                        {d.is_anonymous || !d.donor_name ? 'Contributeur anonyme' : d.donor_name}
-                      </span>
-                      <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                        +{d.amount.toLocaleString()} FCFA
-                      </span>
-                    </div>
-                    {d.message && (
-                      <p className="text-gray-600 dark:text-zinc-300 italic mt-1 leading-relaxed">
-                        "{d.message}"
-                      </p>
-                    )}
-                    <span className="text-[10px] text-gray-400 dark:text-zinc-500 block mt-1.5">
-                      {new Date(d.created_at).toLocaleDateString('fr-FR', {
-                        day: 'numeric',
-                        month: 'short',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </span>
+            {/* Liste des contributions filtrées */}
+            {(() => {
+              const displayedDonations = donations.filter((d) => {
+                if (feedFilter === 'messages') return Boolean(d.message && d.message.trim().length > 0)
+                return true
+              })
+
+              if (displayedDonations.length === 0) {
+                return (
+                  <div className="py-10 text-center space-y-2">
+                    <p className="text-xs font-medium text-gray-400 dark:text-zinc-500">
+                      {feedFilter === 'messages'
+                        ? 'Aucun message d’encouragement pour l’instant.'
+                        : 'Soyez le premier à soutenir cette collecte !'}
+                    </p>
+                    <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                      Chaque geste compte et encourage le porteur du projet.
+                    </p>
                   </div>
-                ))}
-              </div>
-            )}
+                )
+              }
+
+              return (
+                <div className="space-y-3">
+                  {displayedDonations.map((d) => {
+                    const isTopDonation = d.amount >= 25000
+                    const donorDisplayName = d.is_anonymous || !d.donor_name ? 'Contributeur anonyme' : d.donor_name
+                    const initials = d.is_anonymous || !d.donor_name ? '?' : donorDisplayName.slice(0, 2).toUpperCase()
+                    const avatarGradient = getAvatarColors(donorDisplayName)
+                    const isLiked = Boolean(likedDonations[d.id])
+
+                    return (
+                      <div
+                        key={d.id}
+                        className="p-4 rounded-2xl bg-gray-50/80 dark:bg-[#181b29] border border-gray-100 dark:border-zinc-800/80 transition-all hover:border-orange-200 dark:hover:border-zinc-700 text-xs space-y-2.5"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            {/* Avatar initiale dégradé */}
+                            <div
+                              className={`w-9 h-9 rounded-xl bg-gradient-to-br ${avatarGradient} flex items-center justify-center font-extrabold text-xs shrink-0 shadow-2xs`}
+                            >
+                              {initials}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="font-bold text-gray-950 dark:text-white text-xs sm:text-sm">
+                                  {donorDisplayName}
+                                </span>
+                                {isTopDonation && (
+                                  <span className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200/50 dark:border-amber-800/50">
+                                    <Sparkles className="w-2.5 h-2.5" />
+                                    <span>Top soutien</span>
+                                  </span>
+                                )}
+                              </div>
+                              <span className="text-[10px] text-gray-400 dark:text-zinc-500 block">
+                                {new Date(d.created_at).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'short',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })}
+                              </span>
+                            </div>
+                          </div>
+
+                          <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm shrink-0 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-xl border border-emerald-200/40 dark:border-emerald-800/40">
+                            +{d.amount.toLocaleString()} FCFA
+                          </span>
+                        </div>
+
+                        {/* Message d'encouragement */}
+                        {d.message && (
+                          <div className="pl-11 pr-2">
+                            <p className="p-3 bg-white dark:bg-zinc-900/80 rounded-xl border border-gray-100 dark:border-zinc-800 text-gray-700 dark:text-zinc-300 italic leading-relaxed text-xs">
+                              "{d.message}"
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Barre d'action / remerciement discret */}
+                        <div className="pl-11 flex items-center justify-between pt-1">
+                          <button
+                            type="button"
+                            onClick={() => toggleLikeDonation(d.id)}
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                              isLiked
+                                ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60'
+                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            <Heart className={`w-3 h-3 ${isLiked ? 'fill-orange-500 text-orange-500' : ''}`} />
+                            <span>{isLiked ? 'Remercié' : 'Remercier'}</span>
+                          </button>
+
+                          <span className="text-[10px] text-gray-400 dark:text-zinc-500">
+                            Mobile Money vérifié
+                          </span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
           </div>
         </div>
 
@@ -472,6 +615,61 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
               Cette collecte n'accepte plus de nouveaux dons.
             </div>
           )}
+
+          {/* Widget QR Code & Payer sur mobile */}
+          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-5 sm:p-6 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                  <QrCode className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-gray-900 dark:text-white font-heading">
+                    Flasher & Payer sur mobile
+                  </h4>
+                  <p className="text-[10px] text-gray-400 dark:text-zinc-500">
+                    Orange Money, Wave, Moov Money
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShareModalDefaultTab('qr')
+                  setShareModalOpen(true)
+                }}
+                className="text-[11px] font-bold text-orange-600 hover:text-orange-700 dark:text-orange-400 cursor-pointer"
+              >
+                Affiche Live
+              </button>
+            </div>
+
+            <div className="flex flex-col items-center justify-center p-3 bg-gray-50/70 dark:bg-zinc-900/60 rounded-2xl border border-gray-100 dark:border-zinc-800">
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
+                  currentUrl
+                )}&margin=8&format=png`}
+                alt={`QR Code ${campaign.title}`}
+                className="w-32 h-32 rounded-xl bg-white p-2 shadow-2xs border border-gray-100 object-contain"
+                loading="lazy"
+              />
+              <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-2 text-center">
+                Scannez avec l’appareil photo de votre smartphone pour contribuer sans attendre.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setShareModalDefaultTab('qr')
+                setShareModalOpen(true)
+              }}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 border border-gray-200/80 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 text-xs font-bold transition-colors cursor-pointer"
+            >
+              <QrCode className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+              <span>Télécharger l’affiche pour Live & Stories</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -480,6 +678,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
         <ShareModal
           title={campaign.title}
           url={currentUrl}
+          defaultTab={shareModalDefaultTab}
           onClose={() => setShareModalOpen(false)}
         />
       )}
@@ -495,3 +694,4 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
     </div>
   )
 }
+

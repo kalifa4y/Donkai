@@ -46,4 +46,6 @@ export {
   Settings,
   Compass,
   Building2,
+  QrCode,
+  Download,
 } from 'lucide-react'
