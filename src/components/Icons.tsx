@@ -53,5 +53,4 @@ export {
   Maximize2,
   Minimize2,
   Coffee,
-  Printer,
 } from 'lucide-react'

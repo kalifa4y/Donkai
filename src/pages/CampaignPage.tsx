@@ -6,7 +6,6 @@ import { ShareModal } from '../components/ShareModal'
 import { ReportModal } from '../components/ReportModal'
 import { VerifiedBadge } from '../components/VerifiedBadge'
 import { CampaignUpdatesModal, type CampaignUpdate } from '../components/CampaignUpdatesModal'
-import { DonationReceiptModal, type DonationReceiptData } from '../components/DonationReceiptModal'
 import { useAuth } from '../context/AuthContext'
 import {
   Share2,
@@ -45,8 +44,6 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
   const [shareModalDefaultTab, setShareModalDefaultTab] = useState<'share' | 'qr'>('share')
   const [reportModalOpen, setReportModalOpen] = useState(false)
   const [paymentSuccessToast, setPaymentSuccessToast] = useState(false)
-  const [selectedReceipt, setSelectedReceipt] = useState<DonationReceiptData | null>(null)
-  const [paymentSuccessModal, setPaymentSuccessModal] = useState(false)
   const [feedFilter, setFeedFilter] = useState<'all' | 'messages'>('all')
   const [likedDonations, setLikedDonations] = useState<Record<string, boolean>>(() => {
     try {
@@ -55,19 +52,6 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
       return {}
     }
   })
-
-  // Détection du retour de paiement réussi depuis la passerelle Mobile Money
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('payment') === 'success') {
-        setPaymentSuccessModal(true)
-        // Nettoyage de l'URL pour éviter la réouverture intempestive au rafraîchissement
-        const cleanUrl = window.location.pathname
-        window.history.replaceState({}, document.title, cleanUrl)
-      }
-    }
-  }, [])
 
   const isOwnerOrAdmin = Boolean(
     (authUser && (authUser.id === campaign?.user_id || authUser.id === campaign?.profile?.id)) ||
@@ -817,46 +801,20 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
                           </div>
                         )}
 
-                        {/* Barre d'action / remerciement discret & reçu officiel */}
+                        {/* Barre d'action / remerciement discret */}
                         <div className="pl-11 flex items-center justify-between pt-1">
-                          <div className="flex items-center gap-3">
-                            <button
-                              type="button"
-                              onClick={() => toggleLikeDonation(d.id)}
-                              className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
-                                isLiked
-                                  ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60'
-                                  : 'text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800'
-                              }`}
-                            >
-                              <Heart className={`w-3 h-3 ${isLiked ? 'fill-orange-500 text-orange-500' : ''}`} />
-                              <span>{isLiked ? 'Remercié' : 'Remercier'}</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedReceipt({
-                                  id: d.id,
-                                  amount: d.amount,
-                                  donorName: d.donor_name || undefined,
-                                  donorEmail: d.donor_email || undefined,
-                                  isAnonymous: d.is_anonymous,
-                                  message: d.message || undefined,
-                                  createdAt: d.created_at,
-                                  campaignTitle: campaign.title,
-                                  campaignSlug: campaign.slug,
-                                  creatorName: campaign.profile?.display_name || campaign.beneficiary_name || undefined,
-                                  paymentMethod: 'Mobile Money',
-                                })
-                              }}
-                              className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-500 dark:text-zinc-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors cursor-pointer"
-                              title="Voir et télécharger le reçu officiel de cette contribution"
-                            >
-                              <FileText className="w-3 h-3" />
-                              <span>Reçu</span>
-                            </button>
-                          </div>
+                          <button
+                            type="button"
+                            onClick={() => toggleLikeDonation(d.id)}
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer ${
+                              isLiked
+                                ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-200/60 dark:border-orange-800/60'
+                                : 'text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-800'
+                            }`}
+                          >
+                            <Heart className={`w-3 h-3 ${isLiked ? 'fill-orange-500 text-orange-500' : ''}`} />
+                            <span>{isLiked ? 'Remercié' : 'Remercier'}</span>
+                          </button>
 
                           <span className="text-[10px] text-gray-400 dark:text-zinc-500">
                             Mobile Money vérifié
@@ -1033,75 +991,6 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
             setActiveTab('updates')
           }}
         />
-      )}
-
-      {/* Modal de Reçu Officiel & Attestation */}
-      <DonationReceiptModal
-        receipt={selectedReceipt}
-        onClose={() => setSelectedReceipt(null)}
-      />
-
-      {/* Modal de Célébration & Remerciement Post-Paiement */}
-      {paymentSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
-          <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 sm:p-8 max-w-md w-full border border-gray-100 dark:border-zinc-800 shadow-2xl text-center space-y-5">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 mx-auto flex items-center justify-center shadow-lg shadow-emerald-600/10">
-              <CheckCircle2 className="w-8 h-8" />
-            </div>
-
-            <div className="space-y-1.5">
-              <h3 className="text-xl font-heading font-black text-gray-950 dark:text-white">
-                Merci pour votre don !
-              </h3>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 leading-relaxed">
-                Votre contribution a été validée par la passerelle Mobile Money. Grâce à vous, ce projet solidaire franchit une nouvelle étape décisive.
-              </p>
-            </div>
-
-            <div className="space-y-2 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setPaymentSuccessModal(false)
-                  setSelectedReceipt({
-                    id: `don-${Date.now()}`,
-                    amount: 5000,
-                    donorName: 'Vous',
-                    createdAt: new Date().toISOString(),
-                    campaignTitle: campaign.title,
-                    campaignSlug: campaign.slug,
-                    creatorName: campaign.profile?.display_name || campaign.beneficiary_name || undefined,
-                    paymentMethod: 'Mobile Money',
-                  })
-                }}
-                className="w-full py-3 px-4 rounded-2xl bg-orange-600 hover:bg-orange-700 text-white font-heading font-bold text-xs sm:text-sm transition-all shadow-md shadow-orange-600/20 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <FileText className="w-4 h-4" />
-                <span>Télécharger mon Reçu Officiel (PDF)</span>
-              </button>
-
-              <a
-                href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
-                  `Je viens de soutenir le projet "${campaign.title}" sur Donkai ! Rejoignez la chaîne de solidarité : ${window.location.origin}/@${username}/${slug}`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full py-3 px-4 rounded-2xl bg-[#25D366]/10 hover:bg-[#25D366]/20 text-[#25D366] font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2"
-              >
-                <Share2 className="w-4 h-4" />
-                <span>Partager ma fierté sur WhatsApp</span>
-              </a>
-
-              <button
-                type="button"
-                onClick={() => setPaymentSuccessModal(false)}
-                className="w-full py-2.5 px-4 rounded-2xl text-xs font-bold text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-              >
-                Fermer et continuer
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   )

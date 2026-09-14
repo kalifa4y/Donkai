@@ -9,7 +9,6 @@ import {
 } from '../types'
 import { ShareModal } from '../components/ShareModal'
 import { CampaignUpdatesModal } from '../components/CampaignUpdatesModal'
-import { DonationReceiptModal, type DonationReceiptData } from '../components/DonationReceiptModal'
 import {
   Wallet,
   Copy,
@@ -51,7 +50,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [shareCampaign, setShareCampaign] = useState<Campaign | null>(null)
   const [shareTab, setShareTab] = useState<'share' | 'qr'>('qr')
   const [updatingCampaign, setUpdatingCampaign] = useState<Campaign | null>(null)
-  const [selectedReceipt, setSelectedReceipt] = useState<DonationReceiptData | null>(null)
 
   // État modal de retrait
   const [payoutModalOpen, setPayoutModalOpen] = useState(false)
@@ -645,42 +643,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                         </p>
                       </div>
 
-                      <div className="text-right flex items-center gap-3">
-                        <div>
-                          <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                            +{d.amount.toLocaleString()} FCFA
-                          </p>
-                          <span className="text-[10px] text-gray-400 dark:text-zinc-500 block">
-                            Net: +{(d.net_amount || d.amount).toLocaleString()} FCFA
-                          </span>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const relatedCampaign = campaigns.find((c) => c.id === d.campaign_id)
-                            setSelectedReceipt({
-                              id: d.id,
-                              amount: d.amount,
-                              donorName: d.donor_name || undefined,
-                              donorEmail: d.donor_email || undefined,
-                              isAnonymous: d.is_anonymous,
-                              message: d.message || undefined,
-                              createdAt: d.created_at,
-                              campaignTitle: isTea
-                                ? `Micro-dons "Thés" à @${profile?.username || 'créateur'}`
-                                : (relatedCampaign?.title || 'Collecte Solidaire Donkai'),
-                              campaignSlug: relatedCampaign?.slug,
-                              creatorName: profile?.display_name || 'Créateur Donkai',
-                              paymentMethod: 'Mobile Money',
-                            })
-                          }}
-                          className="px-2.5 py-1.5 rounded-xl bg-gray-50 dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-orange-950/40 text-gray-700 dark:text-zinc-300 hover:text-orange-600 dark:hover:text-orange-400 border border-gray-200 dark:border-zinc-700 hover:border-orange-300 text-xs font-bold transition-all flex items-center gap-1 cursor-pointer shrink-0"
-                          title="Générer et imprimer le reçu officiel de cette contribution"
-                        >
-                          <FileText className="w-3 h-3" />
-                          <span className="hidden sm:inline">Reçu</span>
-                        </button>
+                      <div className="text-right">
+                        <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
+                          +{d.amount.toLocaleString()} FCFA
+                        </p>
                       </div>
                     </div>
                   )
@@ -836,12 +802,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           }}
         />
       )}
-
-      {/* Modal d'attestation et reçu de don certifié */}
-      <DonationReceiptModal
-        receipt={selectedReceipt}
-        onClose={() => setSelectedReceipt(null)}
-      />
     </div>
   )
 }
