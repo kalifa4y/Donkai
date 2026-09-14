@@ -21,7 +21,7 @@ interface AuthContextType {
   devSignIn: (email: string, username: string) => Promise<void>
 }
 
-const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || ''
+const CLERK_PUBLISHABLE_KEY = (import.meta.env.VITE_CLERK_PUBLISHABLE_KEY || '').trim()
 // Vérification si une clé Clerk valide est fournie (commence par pk_test_ ou pk_live_)
 const HAS_VALID_CLERK_KEY = Boolean(
   CLERK_PUBLISHABLE_KEY &&
