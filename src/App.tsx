@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext'
 import { I18nProvider } from './lib/i18n'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
+import { Analytics } from '@vercel/analytics/react'
 
 import { HomePage } from './pages/HomePage'
 
@@ -90,6 +91,7 @@ export const App: React.FC = () => {
               onNavigate={navigate}
             />
           </Suspense>
+          <Analytics />
         </AuthProvider>
       </I18nProvider>
     )
@@ -162,6 +164,7 @@ export const App: React.FC = () => {
           </main>
           <Footer onNavigate={navigate} />
         </div>
+        <Analytics />
       </AuthProvider>
     </I18nProvider>
   )
