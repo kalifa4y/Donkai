@@ -408,11 +408,11 @@ export const LiveStreamView: React.FC<LiveStreamViewProps> = ({ username, slug, 
                 />
               </div>
               <div className="h-6 flex items-center">
-                <img src="/icons/wave.svg" alt="Wave" className="h-5 w-auto object-contain" />
+                <img src="/icons/wave.png" alt="Wave" className="h-5 w-auto object-contain" />
               </div>
               <div className="h-6 flex items-center">
                 <img
-                  src="/icons/moov-money.svg"
+                  src="/icons/moov-money.png"
                   alt="Moov Money"
                   className="h-5 w-auto object-contain"
                 />

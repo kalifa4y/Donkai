@@ -337,7 +337,7 @@ export const BuyTeaCard: React.FC<BuyTeaCardProps> = ({
                   : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/40'
               }`}
             >
-              <img src="/icons/wave.svg" alt="Wave" className="h-5 w-auto object-contain mb-1" />
+              <img src="/icons/wave.png" alt="Wave" className="h-5 w-auto object-contain mb-1" />
               <span className="text-[10px] font-bold text-gray-900 dark:text-white">Wave</span>
             </button>
 
@@ -350,7 +350,7 @@ export const BuyTeaCard: React.FC<BuyTeaCardProps> = ({
                   : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/40'
               }`}
             >
-              <img src="/icons/moov-money.svg" alt="Moov" className="h-5 w-auto object-contain mb-1" />
+              <img src="/icons/moov-money.png" alt="Moov" className="h-5 w-auto object-contain mb-1" />
               <span className="text-[10px] font-bold text-gray-900 dark:text-white">Moov</span>
             </button>
           </div>
