@@ -14,6 +14,7 @@ const OnboardingPage = lazy(() => import('./pages/OnboardingPage').then((m) => (
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then((m) => ({ default: m.DashboardPage })))
 const SettingsPage = lazy(() => import('./pages/SettingsPage').then((m) => ({ default: m.SettingsPage })))
 const AdminPage = lazy(() => import('./pages/AdminPage').then((m) => ({ default: m.AdminPage })))
+const LiveStreamView = lazy(() => import('./pages/LiveStreamView').then((m) => ({ default: m.LiveStreamView })))
 
 export const App: React.FC = () => {
   const [currentPath, setCurrentPath] = useState(window.location.pathname)
@@ -61,11 +62,37 @@ export const App: React.FC = () => {
   }
 
   // Analyse des routes avec slugs et username (indépendant du nom de domaine)
+  // Format 0 : /@username/:slug/live (Mode Live Plein Écran TikTok/Stream)
+  const liveMatch = currentPath.match(/^\/@([a-zA-Z0-9_]+)\/([a-zA-Z0-9_-]+)\/live$/)
+
   // Format 1 : /@username/:slug (Collecte spécifique)
   const campaignMatch = currentPath.match(/^\/@([a-zA-Z0-9_]+)\/([a-zA-Z0-9_-]+)$/)
 
   // Format 2 : /@username (Profil organisateur)
   const profileMatch = currentPath.match(/^\/@([a-zA-Z0-9_]+)$/)
+
+  // Si on est en Mode Live Plein Écran, affichage studio immersif sans navbar ni footer
+  if (liveMatch) {
+    return (
+      <I18nProvider>
+        <AuthProvider>
+          <Suspense
+            fallback={
+              <div className="min-h-screen bg-[#07080e] flex items-center justify-center text-white">
+                <div className="w-8 h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            }
+          >
+            <LiveStreamView
+              username={liveMatch[1]}
+              slug={liveMatch[2]}
+              onNavigate={navigate}
+            />
+          </Suspense>
+        </AuthProvider>
+      </I18nProvider>
+    )
+  }
 
   const renderRoute = () => {
     // 1. Page de collecte dédiée : /@username/:slug
@@ -138,5 +165,6 @@ export const App: React.FC = () => {
     </I18nProvider>
   )
 }
+
 
 export default App

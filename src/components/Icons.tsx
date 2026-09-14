@@ -48,4 +48,8 @@ export {
   Building2,
   QrCode,
   Download,
+  Radio,
+  Tv,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react'

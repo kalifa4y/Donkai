@@ -8,6 +8,7 @@ import {
   canUpdateWalletNumber,
 } from '../types'
 import { ShareModal } from '../components/ShareModal'
+import { CampaignUpdatesModal } from '../components/CampaignUpdatesModal'
 import {
   Wallet,
   Copy,
@@ -28,6 +29,8 @@ import {
   Settings,
   QrCode,
   Share2,
+  Radio,
+  FileText,
 } from '../components/Icons'
 
 interface DashboardPageProps {
@@ -45,6 +48,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [copiedLink, setCopiedLink] = useState<string | null>(null)
   const [shareCampaign, setShareCampaign] = useState<Campaign | null>(null)
   const [shareTab, setShareTab] = useState<'share' | 'qr'>('qr')
+  const [updatingCampaign, setUpdatingCampaign] = useState<Campaign | null>(null)
 
   // État modal de retrait
   const [payoutModalOpen, setPayoutModalOpen] = useState(false)
@@ -495,6 +499,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           <div className="flex items-center gap-2 shrink-0 flex-wrap">
                             <button
                               type="button"
+                              onClick={() => onNavigate(`${campaignUrl}/live`)}
+                              className="bg-gray-950 hover:bg-black dark:bg-zinc-900 dark:hover:bg-zinc-800 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer border border-zinc-800"
+                              title="Mode Live Plein Écran TikTok & Stream"
+                            >
+                              <Radio className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
+                              <span>Mode Live</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setUpdatingCampaign(c)}
+                              className="bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/60 text-orange-700 dark:text-orange-300 text-xs font-bold px-3 py-1.5 rounded-xl border border-orange-200/60 dark:border-orange-900/50 transition-colors flex items-center gap-1 cursor-pointer"
+                              title="Publier une actualité du terrain"
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>Nouvelle</span>
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => {
                                 setShareCampaign(c)
                                 setShareTab('qr')
@@ -724,6 +748,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           url={`${window.location.origin}/@${profile?.username || 'user'}/${shareCampaign.slug}`}
           defaultTab={shareTab}
           onClose={() => setShareCampaign(null)}
+        />
+      )}
+
+      {/* Modal de publication d'actualité du terrain */}
+      {updatingCampaign && (
+        <CampaignUpdatesModal
+          campaignId={updatingCampaign.id}
+          campaignTitle={updatingCampaign.title}
+          onClose={() => setUpdatingCampaign(null)}
+          onUpdateCreated={() => {
+            setUpdatingCampaign(null)
+          }}
         />
       )}
     </div>

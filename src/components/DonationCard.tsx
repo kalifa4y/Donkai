@@ -10,7 +10,17 @@ interface DonationCardProps {
   onDonationSuccess?: (donation: Donation) => void
 }
 
-const PRESET_AMOUNTS = [1000, 2500, 5000, 10000]
+interface PresetImpact {
+  amount: number
+  impact: string
+}
+
+const PRESET_AMOUNTS: PresetImpact[] = [
+  { amount: 1000, impact: 'Soutien symbolique' },
+  { amount: 2500, impact: '1 kit repas / fournitures' },
+  { amount: 5000, impact: '1 sac de ciment / matériel' },
+  { amount: 25000, impact: 'Impact direct & décisif' },
+]
 
 export const DonationCard: React.FC<DonationCardProps> = ({
   campaignId,
@@ -140,26 +150,36 @@ export const DonationCard: React.FC<DonationCardProps> = ({
       {/* ÉTAPE 1 : MONTANT & CHOIX DE L'OPÉRATEUR */}
       {step === 1 && (
         <form onSubmit={handleNextStep} className="space-y-5">
-          {/* Montants prédéfinis */}
+          {/* Montants prédéfinis avec paliers d'impact tangibles */}
           <div>
             <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-2">
-              Choisissez votre montant de soutien
+              Choisissez votre montant & palier d’impact
             </label>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {PRESET_AMOUNTS.map((p) => {
-                const isSelected = numAmount === p
+                const isSelected = numAmount === p.amount
                 return (
                   <button
-                    key={p}
+                    key={p.amount}
                     type="button"
-                    onClick={() => setAmount(p)}
-                    className={`py-2.5 px-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                    onClick={() => setAmount(p.amount)}
+                    className={`p-2.5 rounded-2xl text-left border transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected
-                        ? 'bg-orange-600 border-orange-600 text-white shadow-sm shadow-orange-600/30'
-                        : 'bg-gray-50 dark:bg-zinc-800/60 border-gray-200 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 hover:border-gray-300 dark:hover:border-zinc-600'
+                        ? 'bg-orange-600 border-orange-600 text-white shadow-sm shadow-orange-600/30 ring-2 ring-orange-500/20'
+                        : 'bg-gray-50 dark:bg-zinc-800/60 border-gray-200 dark:border-zinc-700 text-gray-800 dark:text-zinc-200 hover:border-orange-300 dark:hover:border-zinc-600'
                     }`}
                   >
-                    {formatFcfa(p)}
+                    <div className="font-extrabold text-xs">
+                      {formatFcfa(p.amount)}{' '}
+                      <span className="text-[10px] font-normal opacity-85">FCFA</span>
+                    </div>
+                    <div
+                      className={`text-[10px] leading-tight mt-1 line-clamp-2 ${
+                        isSelected ? 'text-orange-100 font-medium' : 'text-gray-500 dark:text-zinc-400'
+                      }`}
+                    >
+                      {p.impact}
+                    </div>
                   </button>
                 )
               })}
@@ -178,10 +198,22 @@ export const DonationCard: React.FC<DonationCardProps> = ({
                 placeholder="Autre montant libre..."
                 className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-3 pl-4 pr-16 text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600 transition-all"
               />
-              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-zinc-500 pointer-events-none">
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-zinc-500 pointer-events-none">
                 FCFA
               </span>
             </div>
+            {numAmount >= 100 && (
+              <p className="mt-1.5 text-[11px] text-gray-500 dark:text-zinc-400 flex items-center justify-between">
+                <span>
+                  {PRESET_AMOUNTS.find((p) => p.amount === numAmount)?.impact
+                    ? `Palier : ${PRESET_AMOUNTS.find((p) => p.amount === numAmount)?.impact}`
+                    : '100% reversé au projet'}
+                </span>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
+                  0 FCFA de frais donateur
+                </span>
+              </p>
+            )}
           </div>
 
           {/* Choix de l'opérateur avec VRAIS logos officiels */}

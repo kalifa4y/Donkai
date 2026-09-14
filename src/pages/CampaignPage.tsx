@@ -5,6 +5,8 @@ import { DonationCard } from '../components/DonationCard'
 import { ShareModal } from '../components/ShareModal'
 import { ReportModal } from '../components/ReportModal'
 import { VerifiedBadge } from '../components/VerifiedBadge'
+import { CampaignUpdatesModal, type CampaignUpdate } from '../components/CampaignUpdatesModal'
+import { useAuth } from '../context/AuthContext'
 import {
   Share2,
   AlertCircle,
@@ -18,6 +20,9 @@ import {
   MessageSquare,
   Sparkles,
   QrCode,
+  FileText,
+  Plus,
+  Radio,
 } from '../components/Icons'
 
 interface CampaignPageProps {
@@ -27,8 +32,12 @@ interface CampaignPageProps {
 }
 
 export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNavigate }) => {
+  const { user: authUser, profile: authProfile } = useAuth()
   const [campaign, setCampaign] = useState<Campaign | null>(null)
   const [donations, setDonations] = useState<Donation[]>([])
+  const [updates, setUpdates] = useState<CampaignUpdate[]>([])
+  const [activeTab, setActiveTab] = useState<'about' | 'updates' | 'supporters'>('about')
+  const [updatesModalOpen, setUpdatesModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [shareModalOpen, setShareModalOpen] = useState(false)
@@ -43,6 +52,11 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
       return {}
     }
   })
+
+  const isOwnerOrAdmin = Boolean(
+    (authUser && (authUser.id === campaign?.user_id || authUser.id === campaign?.profile?.id)) ||
+    authProfile?.is_admin
+  )
 
   const toggleLikeDonation = (id: string) => {
     setLikedDonations((prev) => {
@@ -149,6 +163,22 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
             .limit(15)
 
           setDonations(donationsData || [])
+
+          // 4. Charger les actualités de la campagne
+          try {
+            const { data: updatesData } = await supabase
+              .from('campaign_updates')
+              .select('*')
+              .eq('campaign_id', campaignData.id)
+              .order('created_at', { ascending: false })
+
+            const localUpdates = JSON.parse(localStorage.getItem(`donkai_updates_${campaignData.id}`) || '[]')
+            setUpdates([...(updatesData || []), ...localUpdates])
+          } catch {
+            const localUpdates = JSON.parse(localStorage.getItem(`donkai_updates_${campaignData.id}`) || '[]')
+            setUpdates(localUpdates)
+          }
+
           setLoading(false)
           return
         }
@@ -205,6 +235,30 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
             created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
           },
         ]
+
+        // Actualités de terrain de démonstration pour Gao
+        const initialDemoUpdates: CampaignUpdate[] = [
+          {
+            id: 'demo-update-2',
+            campaign_id: demo.id,
+            title: 'Coulage du socle en béton & préparatifs de la pompe solaire',
+            content:
+              'Les artisans locaux ont coulé le socle renforcé qui accueillera le réservoir et l’onduleur solaire. Le séchage prendra 48h avant l’installation du mât. Merci à tous pour votre mobilisation sans faille !',
+            image_url: null,
+            created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+          },
+          {
+            id: 'demo-update-1',
+            campaign_id: demo.id,
+            title: 'Arrivée de la foreuse à Gao & validation géologique',
+            content:
+              'L’équipe technique est sur place avec la foreuse rotative. Les études hydrogéologiques confirment une excellente nappe phréatique à 42 mètres de profondeur. Le forage démarre officiellement.',
+            image_url: null,
+            created_at: new Date(Date.now() - 86400000 * 6).toISOString(),
+          },
+        ]
+        const localUpdates = JSON.parse(localStorage.getItem(`donkai_updates_${demo.id}`) || '[]')
+        setUpdates([...localUpdates, ...initialDemoUpdates])
         setDonations([...localDons, ...initialDemoDonations])
       } else {
         setError('Cette collecte est introuvable ou a été clôturée.')
@@ -352,6 +406,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Colonne gauche : Contenu & Histoire */}
         <div className="lg:col-span-7 space-y-6">
+          {/* Carte En-tête / Couverture / Titre */}
           <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-6">
             {/* En-tête Organisateur / Bénéficiaire */}
             <div className="flex items-center gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
@@ -393,30 +448,235 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
               </div>
             )}
 
-            {/* Titre et description */}
-            <div className="space-y-3">
+            {/* Titre */}
+            <div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-950 dark:text-white tracking-tight leading-tight font-heading">
                 {campaign.title}
               </h1>
-              <p className="text-sm text-gray-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
-                {campaign.description}
-              </p>
             </div>
-
-            {/* Informations sur le bénéficiaire */}
-            {campaign.beneficiary_type === 'other' && campaign.beneficiary_name && (
-              <div className="p-4 bg-gray-50 dark:bg-[#181b29] rounded-2xl border border-gray-200/60 dark:border-zinc-700/60 text-xs text-gray-700 dark:text-zinc-300 space-y-1">
-                <p className="font-bold text-gray-900 dark:text-white">Bénéficiaire désigné des fonds :</p>
-                <p>{campaign.beneficiary_name}</p>
-                <p className="text-[11px] text-gray-500 dark:text-zinc-400">
-                  Les fonds collectés sont directement réservés au bénéficiaire conformément à nos règles de sécurité.
-                </p>
-              </div>
-            )}
           </div>
 
-          {/* Mur des soutiens et messages enrichi */}
-          <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-5 text-left">
+          {/* Navigation par onglets ergonomique */}
+          <div className="flex items-center gap-1.5 p-1.5 bg-gray-100/90 dark:bg-zinc-900 rounded-2xl text-xs font-bold border border-gray-200/60 dark:border-zinc-800">
+            <button
+              type="button"
+              onClick={() => setActiveTab('about')}
+              className={`flex-1 py-2.5 px-3 rounded-xl transition-all cursor-pointer text-center ${
+                activeTab === 'about'
+                  ? 'bg-white dark:bg-zinc-800 text-orange-600 dark:text-orange-400 shadow-2xs font-extrabold'
+                  : 'text-gray-600 dark:text-zinc-400 hover:text-gray-950 dark:hover:text-white'
+              }`}
+            >
+              À propos
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('updates')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl transition-all cursor-pointer text-center ${
+                activeTab === 'updates'
+                  ? 'bg-white dark:bg-zinc-800 text-orange-600 dark:text-orange-400 shadow-2xs font-extrabold'
+                  : 'text-gray-600 dark:text-zinc-400 hover:text-gray-950 dark:hover:text-white'
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>Journal ({updates.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('supporters')}
+              className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl transition-all cursor-pointer text-center ${
+                activeTab === 'supporters'
+                  ? 'bg-white dark:bg-zinc-800 text-orange-600 dark:text-orange-400 shadow-2xs font-extrabold'
+                  : 'text-gray-600 dark:text-zinc-400 hover:text-gray-950 dark:hover:text-white'
+              }`}
+            >
+              <Heart className="w-3.5 h-3.5" />
+              <span>Soutiens ({donations.length})</span>
+            </button>
+          </div>
+
+          {/* ONGLET 1 : À PROPOS */}
+          {activeTab === 'about' && (
+            <div className="space-y-6">
+              <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-4">
+                <h3 className="text-base font-extrabold text-gray-950 dark:text-white font-heading">
+                  Histoire et contexte du projet
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                  {campaign.description}
+                </p>
+
+                {/* Informations sur le bénéficiaire */}
+                {campaign.beneficiary_type === 'other' && campaign.beneficiary_name && (
+                  <div className="p-4 bg-gray-50 dark:bg-[#181b29] rounded-2xl border border-gray-200/60 dark:border-zinc-700/60 text-xs text-gray-700 dark:text-zinc-300 space-y-1 mt-4">
+                    <p className="font-bold text-gray-900 dark:text-white">Bénéficiaire désigné des fonds :</p>
+                    <p>{campaign.beneficiary_name}</p>
+                    <p className="text-[11px] text-gray-500 dark:text-zinc-400">
+                      Les fonds collectés sont directement réservés au bénéficiaire conformément à nos règles de sécurité.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Callout de la dernière nouvelle du terrain */}
+              {updates.length > 0 && (
+                <div className="bg-orange-50/70 dark:bg-orange-950/25 border border-orange-200/70 dark:border-orange-900/40 rounded-3xl p-6 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                      <span className="text-xs font-extrabold text-orange-700 dark:text-orange-300 uppercase tracking-wider">
+                        Dernière avancée du terrain
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+                      {new Date(updates[0].created_at).toLocaleDateString('fr-FR', {
+                        day: 'numeric',
+                        month: 'short',
+                      })}
+                    </span>
+                  </div>
+                  <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                    {updates[0].title}
+                  </h4>
+                  <p className="text-xs text-gray-600 dark:text-zinc-300 line-clamp-2 leading-relaxed">
+                    {updates[0].content}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('updates')}
+                    className="text-xs font-bold text-orange-600 hover:text-orange-700 dark:text-orange-400 inline-flex items-center gap-1 cursor-pointer pt-1"
+                  >
+                    <span>Consulter le journal complet ({updates.length} actualité{updates.length > 1 ? 's' : ''})</span>
+                    <ChevronLeft className="w-3.5 h-3.5 rotate-180" />
+                  </button>
+                </div>
+              )}
+
+              {/* Mini aperçu des soutiens */}
+              <div className="flex items-center justify-between p-4 bg-white dark:bg-[#12141f] rounded-2xl border border-gray-100 dark:border-zinc-800 shadow-2xs text-xs">
+                <div className="flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-orange-500 fill-orange-500" />
+                  <span className="text-gray-700 dark:text-zinc-300 font-medium">
+                    {donations.length} contributeur{donations.length > 1 ? 's' : ''} engagé{donations.length > 1 ? 's' : ''}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('supporters')}
+                  className="font-bold text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
+                >
+                  Voir le mur des soutiens →
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ONGLET 2 : JOURNAL DU PROJET / ACTUALITÉS DE TERRAIN */}
+          {activeTab === 'updates' && (
+            <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-extrabold text-gray-950 dark:text-white font-heading">
+                      Journal d’avancement du terrain
+                    </h3>
+                    <p className="text-[11px] text-gray-400 dark:text-zinc-500">
+                      {updates.length} étape{updates.length > 1 ? 's' : ''} documentée{updates.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </div>
+
+                {isOwnerOrAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setUpdatesModalOpen(true)}
+                    className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition-all shadow-2xs cursor-pointer self-start sm:self-auto"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Publier une nouvelle</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Liste chronologique des actualités */}
+              {updates.length === 0 ? (
+                <div className="py-12 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto">
+                    <FileText className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-bold text-gray-800 dark:text-zinc-200">
+                    Aucune actualité publiée pour le moment
+                  </p>
+                  <p className="text-[11px] text-gray-500 dark:text-zinc-400 max-w-sm mx-auto">
+                    Le porteur du projet publiera ici les photos réelles et étapes au fur et à mesure de l'avancement.
+                  </p>
+                  {isOwnerOrAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => setUpdatesModalOpen(true)}
+                      className="inline-flex items-center gap-1.5 bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-2xs cursor-pointer mt-2"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Publier la première actualité</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {updates.map((up, idx) => (
+                    <div
+                      key={up.id}
+                      className="relative pl-6 sm:pl-8 pb-6 last:pb-0 border-l-2 border-orange-200 dark:border-orange-950/60 last:border-l-transparent"
+                    >
+                      {/* Puce timeline */}
+                      <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-600 ring-4 ring-orange-100 dark:ring-orange-950" />
+
+                      <div className="bg-gray-50/80 dark:bg-[#181b29] rounded-2xl border border-gray-100 dark:border-zinc-800 p-5 space-y-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider bg-orange-50 dark:bg-orange-950/40 px-2 py-0.5 rounded-full border border-orange-200/50 dark:border-orange-900/50">
+                            Étape #{updates.length - idx}
+                          </span>
+                          <span className="text-[11px] text-gray-400 dark:text-zinc-500">
+                            {new Date(up.created_at).toLocaleDateString('fr-FR', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+
+                        <h4 className="text-sm sm:text-base font-extrabold text-gray-950 dark:text-white font-heading">
+                          {up.title}
+                        </h4>
+
+                        {up.image_url && (
+                          <div className="rounded-xl overflow-hidden border border-gray-200/70 dark:border-zinc-700/60 bg-black/5 max-h-[320px]">
+                            <img
+                              src={up.image_url}
+                              alt={up.title}
+                              className="w-full h-auto object-cover"
+                              loading="lazy"
+                            />
+                          </div>
+                        )}
+
+                        <p className="text-xs text-gray-700 dark:text-zinc-300 leading-relaxed whitespace-pre-line">
+                          {up.content}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ONGLET 3 : MUR DES SOUTIENS */}
+          {activeTab === 'supporters' && (
+            <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100/70 dark:border-zinc-800 shadow-xs p-6 sm:p-8 space-y-5 text-left">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center">
@@ -567,6 +827,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
               )
             })()}
           </div>
+        )}
         </div>
 
         {/* Colonne droite : Barre de progression & Formulaire de don direct */}
@@ -678,6 +939,15 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
 
             <button
               type="button"
+              onClick={() => onNavigate(`/@${username}/${slug}/live`)}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gray-950 hover:bg-black dark:bg-orange-600 dark:hover:bg-orange-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            >
+              <Radio className="w-3.5 h-3.5 text-orange-400 dark:text-white animate-pulse" />
+              <span>Lancer le Mode Live Plein Écran</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => {
                 setShareModalDefaultTab('qr')
                 setShareModalOpen(true)
@@ -707,6 +977,19 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
           campaignTitle={campaign.title}
           targetUserId={campaign.user_id}
           onClose={() => setReportModalOpen(false)}
+        />
+      )}
+
+      {/* Modal de publication d'actualité du terrain */}
+      {updatesModalOpen && (
+        <CampaignUpdatesModal
+          campaignId={campaign.id}
+          campaignTitle={campaign.title}
+          onClose={() => setUpdatesModalOpen(false)}
+          onUpdateCreated={(newUpdate) => {
+            setUpdates((prev) => [newUpdate, ...prev])
+            setActiveTab('updates')
+          }}
         />
       )}
     </div>
