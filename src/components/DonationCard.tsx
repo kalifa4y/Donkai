@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import type { Donation, WalletProvider } from '../types'
-import { calculateDonationFee } from '../types'
 import { Heart, Loader2, AlertCircle, ArrowRight, ArrowLeft, ShieldCheck } from './Icons'
 
 interface DonationCardProps {
@@ -31,7 +30,6 @@ export const DonationCard: React.FC<DonationCardProps> = ({
   const [error, setError] = useState<string | null>(null)
 
   const numAmount = Number(amount) || 0
-  const { fee, netAmount } = calculateDonationFee(numAmount)
 
   const formatFcfa = (val: number): string => {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
@@ -254,19 +252,6 @@ export const DonationCard: React.FC<DonationCardProps> = ({
             </div>
           </div>
 
-          {/* Décomposition transparente des frais : 5% stricts */}
-          {numAmount >= 100 && (
-            <div className="p-3 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-100 dark:border-zinc-800 text-[11px] text-gray-600 dark:text-zinc-400 space-y-1">
-              <div className="flex justify-between">
-                <span>Commission plateforme (5%) :</span>
-                <span className="font-semibold text-gray-900 dark:text-white">{formatFcfa(fee)} FCFA</span>
-              </div>
-              <div className="flex justify-between border-t border-gray-200/50 dark:border-zinc-700/50 pt-1 font-bold">
-                <span className="text-gray-900 dark:text-zinc-200">Net reversé au projet :</span>
-                <span className="text-emerald-600 dark:text-emerald-400">{formatFcfa(netAmount)} FCFA</span>
-              </div>
-            </div>
-          )}
 
           <button
             type="submit"

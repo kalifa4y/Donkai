@@ -112,7 +112,7 @@ export const translations: Translations = {
   'dashboard.average_donation': { fr: 'Moyenne des contributions', en: 'Average contribution' },
   'dashboard.my_campaigns': { fr: 'Mes collectes', en: 'My campaigns' },
   'dashboard.request_payout': { fr: 'Demander un retrait', en: 'Request payout' },
-  'dashboard.fees_info': { fr: 'Frais : 5 % + 100 FCFA par contribution, déduits du montant reçu. Aucun frais au retrait.', en: 'Fees: 5% + 100 FCFA per contribution, deducted from received amount. Zero fee on withdrawal.' },
+  'dashboard.fees_info': { fr: 'Les versements sont transférés directement sur votre numéro Mobile Money.', en: 'Payouts are transferred directly to your Mobile Money number.' },
   'dashboard.payout_lock_warning': { fr: 'Les informations de réception ont récemment été modifiées. Certaines opérations peuvent être temporairement limitées pour protéger cette collecte.', en: 'Payout information was recently updated. Certain operations may be temporarily restricted to protect this campaign.' },
 }
 

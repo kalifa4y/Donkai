@@ -12,10 +12,11 @@ ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- 2. Fonctions auxiliaires pour extraire l'identifiant Clerk et vérifier le rôle admin
+-- 2. Fonctions auxiliaires pour extraire l'identifiant utilisateur (Supabase Auth natif + rétrocompatibilité)
 CREATE OR REPLACE FUNCTION requesting_clerk_id()
 RETURNS text AS $$
   SELECT COALESCE(
+    auth.uid()::text,
     nullif(current_setting('request.jwt.claim.sub', true), ''),
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
   );
@@ -25,7 +26,7 @@ CREATE OR REPLACE FUNCTION is_admin_user()
 RETURNS boolean AS $$
   SELECT EXISTS (
     SELECT 1 FROM profiles
-    WHERE clerk_user_id = requesting_clerk_id()
+    WHERE (clerk_user_id = requesting_clerk_id() OR id::text = requesting_clerk_id())
       AND is_admin = true
   );
 $$ LANGUAGE sql STABLE;

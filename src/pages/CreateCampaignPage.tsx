@@ -614,10 +614,6 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
                 <span className="text-gray-600 dark:text-zinc-400 font-medium">Objectif financier :</span>
                 <strong className="text-orange-600 dark:text-orange-400 font-bold">{formatFcfa(Number(goalAmount) || 0)} FCFA</strong>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600 dark:text-zinc-400 font-medium">Frais plateforme :</span>
-                <span className="text-emerald-700 dark:text-emerald-400 font-bold">5 % uniquement (zéro frais fixe)</span>
-              </div>
             </div>
 
             {/* Coordonnées de versement Mobile Money */}

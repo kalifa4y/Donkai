@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
       payment_method,
       idempotency_key,
       return_url,
+      returnUrl,
     } = await req.json()
 
     const parsedAmount = Number(amount)
@@ -89,7 +90,9 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Cette collecte n’accepte plus de contributions' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
-        // 3. Calcul strict des frais côté serveur (5% uniquement)
+    }
+
+    // 3. Calcul strict des frais côté serveur (5% uniquement)
     const fee = Math.round(parsedAmount * 0.05)
     const netAmount = Math.max(0, parsedAmount - fee)
 
@@ -134,7 +137,7 @@ Deno.serve(async (req) => {
       description: `Soutien : ${campaign.title}`,
       customer_name: is_anonymous ? 'Anonyme' : (donor_name || 'Anonyme'),
       customer_email: donor_email || 'donateur@donkai.app',
-      return_url: returnUrl || '',
+      return_url: return_url || returnUrl || '',
       metadata: {
         donation_id: donation.id,
         campaign_id: campaign.id,

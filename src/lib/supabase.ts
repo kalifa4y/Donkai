@@ -7,22 +7,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Donkai: Supabase URL or anon key missing in environment variables.')
 }
 
-// Get Clerk token via useAuth hook at component level,
-// this global config serves as fallback for direct requests
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  global: {
-    fetch: async (url, options: RequestInit = {}) => {
-      // Try to get token from Clerk through window
-      const clerk = (window as unknown as { Clerk?: { session?: { getToken: (opts?: { template?: string }) => Promise<string | null> } } })?.Clerk
-      const token = clerk?.session ? await clerk.session.getToken({ template: 'supabase' }) : null
-      const headers = new Headers(options.headers as HeadersInit)
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`)
-      }
-      return fetch(url, {
-        ...options,
-        headers,
-      })
-    },
-  },
-})
+// Client Supabase officiel avec gestion native des sessions et de l'authentification
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)

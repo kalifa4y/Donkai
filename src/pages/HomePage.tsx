@@ -125,10 +125,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         ' Vos contributeurs accèdent directement au lien de votre collecte depuis WhatsApp ou les réseaux sociaux, choisissent leur montant et valident en 10 secondes via Orange Money, Wave ou Moov Money.',
     },
     {
-      question: 'Quels sont les frais appliqués sur DONKAI ?',
-      highlight: 'La création de collecte est 100 % gratuite.',
+      question: 'Y a-t-il des frais pour les donateurs ?',
+      highlight: 'Aucun frais pour les donateurs.',
       answer:
-        ' Des frais transparents de 5 % par contribution réussie sont déduits du montant reçu. Aucun frais fixe additionnel n’est appliqué. Les retraits vers votre numéro Mobile Money sont sans aucun frais additionnel.',
+        ' Les contributeurs ne payent aucun frais supplémentaire : la totalité du montant choisi va directement au soutien du projet sans mauvaise surprise.',
     },
     {
       question: 'Comment et quand puis-je retirer l’argent collecté ?',
@@ -164,10 +164,10 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         ' Supporters open your link directly from WhatsApp or social media, choose an amount, and complete their payment in seconds via Orange Money, Wave, or Moov Money.',
     },
     {
-      question: 'What fees are charged on DONKAI?',
-      highlight: 'Starting a campaign is 100% free.',
+      question: 'Are there any fees for donors?',
+      highlight: 'Zero fees for donors.',
       answer:
-        ' Transparent 5% platform fee per successful donation is deducted from the received amount. No additional fixed fee is charged. Withdrawals to your Mobile Money are free of charge.',
+        ' Supporters pay zero extra fees: the entire selected amount goes directly to backing the cause with complete peace of mind.',
     },
     {
       question: 'How and when can I withdraw collected funds?',
@@ -624,19 +624,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                   </div>
 
                   <div className="p-4 rounded-2xl bg-[#faf9f6] dark:bg-[#181b29] border border-gray-200/60 dark:border-zinc-700/60 space-y-2">
-                    <span className="text-[11px] text-gray-400 dark:text-zinc-500 font-bold uppercase">Transparence des frais</span>
+                    <span className="text-[11px] text-gray-400 dark:text-zinc-500 font-bold uppercase">Expérience donateur fluide</span>
                     <div className="space-y-1 text-xs pt-1">
                       <div className="flex justify-between">
-                        <span className="text-gray-500 dark:text-zinc-400">Montant sélectionné</span>
+                        <span className="text-gray-500 dark:text-zinc-400">Montant choisi</span>
                         <strong className="text-gray-900 dark:text-zinc-100">2 500 FCFA</strong>
                       </div>
-                      <div className="flex justify-between text-gray-500 dark:text-zinc-400">
-                        <span>Frais plateforme (5%)</span>
-                        <span>-125 FCFA</span>
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold">
+                        <span>Frais donateur</span>
+                        <span>0 FCFA (Gratuit)</span>
                       </div>
-                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold pt-1 border-t border-gray-200 dark:border-zinc-700">
-                        <span>Net versé au projet</span>
-                        <span>2 375 FCFA</span>
+                      <div className="flex justify-between text-gray-700 dark:text-zinc-300 font-medium pt-1 border-t border-gray-200 dark:border-zinc-700">
+                        <span>Validation</span>
+                        <span>Instantanée par USSD / SMS</span>
                       </div>
                     </div>
                   </div>
@@ -774,19 +774,19 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Grille de transparence des frais (Règle scan 5s : chiffres avant texte) */}
+          {/* Grille d'avantages clés (Règle scan 5s : chiffres avant texte) */}
           <div className="max-w-2xl mx-auto p-5 rounded-3xl bg-gray-50 dark:bg-[#13151f] border border-gray-200/80 dark:border-zinc-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
             <div>
               <span className="text-xl font-heading font-extrabold text-gray-950 dark:text-white">0 FCFA</span>
               <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Pour créer votre collecte</p>
             </div>
             <div className="border-y sm:border-y-0 sm:border-x border-gray-200 dark:border-zinc-800 py-2 sm:py-0">
-              <span className="text-xl font-heading font-extrabold text-orange-600 dark:text-orange-400">5 %</span>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Par don reçu (sans frais fixes)</p>
+              <span className="text-xl font-heading font-extrabold text-orange-600 dark:text-orange-400">10 sec</span>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Pour soutenir sans créer de compte</p>
             </div>
             <div>
               <span className="text-xl font-heading font-extrabold text-emerald-600 dark:text-emerald-400">0 FCFA</span>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Frais de retrait Mobile Money</p>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Frais donateur sur tout paiement</p>
             </div>
           </div>
         </div>

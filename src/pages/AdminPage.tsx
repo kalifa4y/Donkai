@@ -1,7 +1,16 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Report, Payout, Campaign } from '../types'
-import { Lock } from '../components/Icons'
+import type { Report, Payout, Campaign, Profile, Donation, AuditLog } from '../types'
+import { Lock, Menu, CheckCircle2, AlertCircle } from 'lucide-react'
+import { AdminSidebar, type AdminSection } from '../components/admin/AdminSidebar'
+import { AdminDashboardView } from '../components/admin/AdminDashboardView'
+import { AdminCampaignsView } from '../components/admin/AdminCampaignsView'
+import { AdminUsersView } from '../components/admin/AdminUsersView'
+import { AdminDonationsView } from '../components/admin/AdminDonationsView'
+import { AdminPayoutsView } from '../components/admin/AdminPayoutsView'
+import { AdminReportsView } from '../components/admin/AdminReportsView'
+import { AdminKycView, type VerificationRecord } from '../components/admin/AdminKycView'
+import { AdminAuditLogsView } from '../components/admin/AdminAuditLogsView'
 
 interface AdminPageProps {
   onNavigate?: (path: string) => void
@@ -10,90 +19,129 @@ interface AdminPageProps {
 export const AdminPage: React.FC<AdminPageProps> = () => {
   const [passcode, setPasscode] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [activeTab, setActiveTab] = useState<'reports' | 'payouts' | 'campaigns'>('reports')
+  const [activeSection, setActiveSection] = useState<AdminSection>('dashboard')
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
 
-  const [reports, setReports] = useState<Report[]>([])
-  const [payouts, setPayouts] = useState<Payout[]>([])
+  // Données d'administration
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [users, setUsers] = useState<Profile[]>([])
+  const [donations, setDonations] = useState<Donation[]>([])
+  const [payouts, setPayouts] = useState<Payout[]>([])
+  const [reports, setReports] = useState<Report[]>([])
+  const [kycRecords, setKycRecords] = useState<VerificationRecord[]>([])
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+
   const [loading, setLoading] = useState(false)
-  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; isError?: boolean } | null>(null)
+
+  const showToast = (message: string, isError = false) => {
+    setToast({ message, isError })
+    setTimeout(() => setToast(null), 4000)
+  }
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
-    // Clé d'accès administrateur interne (sécurisée en variable d'environnement ou code interne)
     if (passcode === 'donkai_admin_2026' || passcode === 'admin') {
       setIsAuthenticated(true)
-      loadAdminData()
+      loadAllAdminData()
     } else {
       alert('Code administrateur invalide.')
     }
   }
 
-  const loadAdminData = async () => {
+  const loadAllAdminData = async () => {
     setLoading(true)
     try {
-      // 1. Signalements
-      const { data: repData } = await supabase
-        .from('reports')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      const localReports = JSON.parse(localStorage.getItem('donkai_local_reports') || '[]')
-      setReports([...(repData || []), ...localReports])
-
-      // 2. Retraits
-      const { data: payData } = await supabase
-        .from('payouts')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      setPayouts(payData || [])
-
-      // 3. Campagnes
+      // 1. Collectes
       const { data: campData } = await supabase
         .from('campaigns')
         .select('*')
         .order('created_at', { ascending: false })
-
       setCampaigns(campData || [])
+
+      // 2. Profils Utilisateurs
+      const { data: usersData } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setUsers(usersData || [])
+
+      // 3. Contributions / Dons
+      const { data: donData } = await supabase
+        .from('donations')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setDonations(donData || [])
+
+      // 4. Retraits
+      const { data: payData } = await supabase
+        .from('payouts')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setPayouts(payData || [])
+
+      // 5. Signalements
+      const { data: repData } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false })
+      const localReports = JSON.parse(localStorage.getItem('donkai_local_reports') || '[]')
+      setReports([...(repData || []), ...localReports])
+
+      // 6. KYC
+      const { data: kycData } = await supabase
+        .from('verification_records')
+        .select('*')
+        .order('created_at', { ascending: false })
+      setKycRecords((kycData as VerificationRecord[]) || [])
+
+      // 7. Audit Logs
+      const { data: auditData } = await supabase
+        .from('audit_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      setAuditLogs((auditData as AuditLog[]) || [])
     } catch (err) {
-      console.error('Erreur chargement admin:', err)
+      console.error('Erreur chargement back-office Donkai:', err)
+      showToast('Impossible de charger toutes les données.', true)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleUpdateReportStatus = async (id: string, status: 'reviewed' | 'dismissed') => {
-    await supabase.from('reports').update({ status }).eq('id', id)
-    setActionSuccess('Signalement mis à jour.')
-    setTimeout(() => setActionSuccess(null), 3000)
-    loadAdminData()
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadAllAdminData()
+    }
+  }, [isAuthenticated])
+
+  // Compteurs pour la sidebar
+  const sidebarCounts = {
+    campaigns: campaigns.length,
+    users: users.length,
+    donations: donations.length,
+    pendingPayouts: payouts.filter((p) => p.status === 'requested' || p.status === 'under_review').length,
+    pendingReports: reports.filter((r) => r.status === 'pending').length,
+    pendingKyc: kycRecords.filter((k) => k.status === 'pending').length,
   }
 
-  const handleUpdateCampaignStatus = async (id: string, status: 'active' | 'suspended') => {
-    await supabase.from('campaigns').update({ status }).eq('id', id)
-    setActionSuccess(`Collecte passée au statut : ${status}`)
-    setTimeout(() => setActionSuccess(null), 3000)
-    loadAdminData()
-  }
-
-  const handleApprovePayout = async (id: string) => {
-    await supabase.from('payouts').update({ status: 'completed' }).eq('id', id)
-    setActionSuccess('Retrait validé et transféré vers l’opérateur.')
-    setTimeout(() => setActionSuccess(null), 3000)
-    loadAdminData()
-  }
-
+  // Écran de verrouillage / Déverrouillage par mot de passe
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4">
-        <form onSubmit={handleLogin} className="bg-white dark:bg-[#12141f] p-8 rounded-3xl border border-gray-200 dark:border-zinc-800 max-w-sm w-full space-y-4 shadow-sm text-left">
-          <div className="w-10 h-10 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center mx-auto mb-2">
-            <Lock className="w-5 h-5" />
+      <div className="min-h-[75vh] flex items-center justify-center px-4">
+        <form
+          onSubmit={handleLogin}
+          className="bg-white dark:bg-[#12141f] p-8 rounded-3xl border border-gray-200 dark:border-zinc-800 max-w-sm w-full space-y-4 shadow-sm text-left animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-orange-600 text-white flex items-center justify-center mx-auto mb-2 shadow-lg shadow-orange-600/30">
+            <Lock className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-extrabold text-gray-950 dark:text-white text-center">Espace Modération & Conformité</h2>
+          <h2 className="text-xl font-extrabold text-gray-950 dark:text-white text-center font-heading">
+            Espace d'Administration Donkai
+          </h2>
           <p className="text-xs text-gray-500 dark:text-zinc-400 text-center">
-            Accès strictement réservé aux équipes de surveillance Donkai.
+            Accès strictement réservé aux gestionnaires et modérateurs Donkai.
           </p>
           <div>
             <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
@@ -109,9 +157,9 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
           </div>
           <button
             type="submit"
-            className="w-full bg-gray-900 hover:bg-black dark:bg-white dark:text-gray-950 dark:hover:bg-zinc-200 text-white font-bold py-3 rounded-xl text-xs transition-colors cursor-pointer"
+            className="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-3 rounded-xl text-xs transition-colors cursor-pointer shadow-md shadow-orange-600/20"
           >
-            Déverrouiller
+            Déverrouiller le Panneau
           </button>
         </form>
       </div>
@@ -119,193 +167,168 @@ export const AdminPage: React.FC<AdminPageProps> = () => {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8 text-left">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-extrabold text-gray-950 dark:text-white">Espace Modération & Surveillance</h1>
-          <p className="text-xs text-gray-500 dark:text-zinc-400">Revue humaine des alertes et contrôles financiers</p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsAuthenticated(false)}
-          className="text-xs font-bold text-gray-500 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-white border border-gray-200 dark:border-zinc-700 px-3 py-1.5 rounded-xl cursor-pointer"
-        >
-          Verrouiller
-        </button>
+    <div className="min-h-screen bg-[#faf9f6] dark:bg-[#0c0d12] transition-colors">
+      {/* Sidebar latérale */}
+      <AdminSidebar
+        activeSection={activeSection}
+        onSelectSection={setActiveSection}
+        counts={sidebarCounts}
+        onLock={() => setIsAuthenticated(false)}
+        isMobileOpen={isMobileOpen}
+        setIsMobileOpen={setIsMobileOpen}
+      />
+
+      {/* Contenu Principal (Décalé à droite pour faire de la place à la Sidebar sur Desktop) */}
+      <div className="md:pl-64 flex flex-col min-h-screen">
+        {/* Barre d'en-tête de section */}
+        <header className="sticky top-0 z-20 bg-white/90 dark:bg-[#10121a]/90 backdrop-blur-md border-b border-gray-200/80 dark:border-zinc-800 px-4 sm:px-8 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen(true)}
+              className="md:hidden text-gray-600 dark:text-zinc-300 p-1.5 rounded-xl border border-gray-200 dark:border-zinc-700"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-wider text-[10px]">
+                Back-Office
+              </span>
+              <span className="text-gray-300 dark:text-zinc-600">/</span>
+              <span className="font-extrabold text-gray-900 dark:text-white capitalize">
+                {activeSection === 'dashboard'
+                  ? "Vue d'ensemble"
+                  : activeSection === 'campaigns'
+                  ? 'Collectes'
+                  : activeSection === 'users'
+                  ? 'Utilisateurs'
+                  : activeSection === 'donations'
+                  ? 'Contributions'
+                  : activeSection === 'payouts'
+                  ? 'Retraits'
+                  : activeSection === 'reports'
+                  ? 'Signalements'
+                  : activeSection === 'kyc'
+                  ? 'KYC'
+                  : 'Audit'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Système En Ligne
+            </span>
+          </div>
+        </header>
+
+        {/* Notifications Toast Flottantes */}
+        {toast && (
+          <div
+            className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 rounded-2xl shadow-xl text-xs font-bold transition-all animate-in slide-in-from-bottom-4 duration-200 ${
+              toast.isError
+                ? 'bg-red-600 text-white'
+                : 'bg-emerald-600 text-white'
+            }`}
+          >
+            {toast.isError ? (
+              <AlertCircle className="w-4 h-4 shrink-0" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+        )}
+
+        {/* Zone de Contenu Principale */}
+        <main className="flex-1 p-4 sm:p-8 max-w-7xl w-full mx-auto">
+          {loading && (
+            <div className="py-2 text-center text-xs text-orange-600 dark:text-orange-400 animate-pulse font-medium mb-4">
+              Synchronisation avec la base de données...
+            </div>
+          )}
+
+          {activeSection === 'dashboard' && (
+            <AdminDashboardView
+              campaigns={campaigns}
+              users={users}
+              donations={donations}
+              payouts={payouts}
+              reports={reports}
+              onNavigateSection={(sec) => setActiveSection(sec)}
+              onOpenCreateCampaign={() => setActiveSection('campaigns')}
+              onOpenCreateUser={() => setActiveSection('users')}
+              onOpenCreateDonation={() => setActiveSection('donations')}
+              onRefreshData={loadAllAdminData}
+              loading={loading}
+            />
+          )}
+
+          {activeSection === 'campaigns' && (
+            <AdminCampaignsView
+              campaigns={campaigns}
+              users={users}
+              onRefresh={loadAllAdminData}
+              onNotify={showToast}
+            />
+          )}
+
+          {activeSection === 'users' && (
+            <AdminUsersView
+              users={users}
+              onRefresh={loadAllAdminData}
+              onNotify={showToast}
+            />
+          )}
+
+          {activeSection === 'donations' && (
+            <AdminDonationsView
+              donations={donations}
+              campaigns={campaigns}
+              onRefresh={loadAllAdminData}
+              onNotify={showToast}
+            />
+          )}
+
+          {activeSection === 'payouts' && (
+            <AdminPayoutsView
+              payouts={payouts}
+              users={users}
+              onRefresh={loadAllAdminData}
+              onNotify={showToast}
+            />
+          )}
+
+          {activeSection === 'reports' && (
+            <AdminReportsView
+              reports={reports}
+              campaigns={campaigns}
+              users={users}
+              onRefresh={loadAllAdminData}
+              onNotify={showToast}
+            />
+          )}
+
+          {activeSection === 'kyc' && (
+            <AdminKycView
+              kycRecords={kycRecords}
+              users={users}
+              onRefresh={loadAllAdminData}
+              onNotify={showToast}
+            />
+          )}
+
+          {activeSection === 'audit' && (
+            <AdminAuditLogsView
+              auditLogs={auditLogs}
+              users={users}
+              onRefresh={loadAllAdminData}
+            />
+          )}
+        </main>
       </div>
-
-      {actionSuccess && (
-        <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/50 text-emerald-900 dark:text-emerald-300 rounded-xl text-xs font-bold">
-          {actionSuccess}
-        </div>
-      )}
-
-      {/* Onglets Admin */}
-      <div className="flex border-b border-gray-200 dark:border-zinc-800 gap-2 text-xs font-bold">
-        <button
-          type="button"
-          onClick={() => setActiveTab('reports')}
-          className={`py-2 px-4 rounded-t-xl transition-colors cursor-pointer ${
-            activeTab === 'reports' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-b-2 border-orange-600' : 'text-gray-500 dark:text-zinc-400'
-          }`}
-        >
-          Signalements reçus ({reports.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('payouts')}
-          className={`py-2 px-4 rounded-t-xl transition-colors cursor-pointer ${
-            activeTab === 'payouts' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-b-2 border-orange-600' : 'text-gray-500 dark:text-zinc-400'
-          }`}
-        >
-          Retraits à valider ({payouts.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('campaigns')}
-          className={`py-2 px-4 rounded-t-xl transition-colors cursor-pointer ${
-            activeTab === 'campaigns' ? 'bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border-b-2 border-orange-600' : 'text-gray-500 dark:text-zinc-400'
-          }`}
-        >
-          Collectes actives & suspensions ({campaigns.length})
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="py-12 text-center text-gray-400 dark:text-zinc-500 text-xs">Chargement des données de modération...</div>
-      ) : (
-        <div className="bg-white dark:bg-[#12141f] rounded-3xl border border-gray-200 dark:border-zinc-800 p-6 shadow-xs">
-          {/* Signalements */}
-          {activeTab === 'reports' && (
-            <div className="space-y-4">
-              <div className="p-3 bg-gray-50 dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl text-xs text-gray-600 dark:text-zinc-300">
-                <strong>Règle Donkai :</strong> 3 signalements crédibles entraînent une revue immédiate et le blocage préventif des retraits.
-              </div>
-
-              {reports.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-zinc-500 py-6 text-center">Aucun signalement en attente.</p>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-                  {reports.map((r, i) => (
-                    <div key={r.id || i} className="py-4 flex items-start justify-between gap-4 text-xs">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-bold text-red-600 dark:text-red-400 uppercase tracking-wider text-[10px]">
-                            {r.reason}
-                          </span>
-                          <span className="text-gray-400 dark:text-zinc-500">
-                            {r.created_at ? new Date(r.created_at).toLocaleDateString('fr-FR') : 'Aujourd’hui'}
-                          </span>
-                        </div>
-                        <p className="text-gray-800 dark:text-zinc-200 font-medium">{r.description}</p>
-                        {r.reporter_email && (
-                          <p className="text-[11px] text-gray-400 dark:text-zinc-500">Email déclarant : {r.reporter_email}</p>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateReportStatus(r.id, 'reviewed')}
-                          className="bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 px-3 py-1.5 rounded-lg font-bold text-[11px] transition-colors cursor-pointer border border-emerald-200/50 dark:border-emerald-800/50"
-                        >
-                          Marquer vérifié
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleUpdateReportStatus(r.id, 'dismissed')}
-                          className="bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 px-3 py-1.5 rounded-lg font-bold text-[11px] transition-colors cursor-pointer"
-                        >
-                          Rejeter
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Retraits */}
-          {activeTab === 'payouts' && (
-            <div className="space-y-4">
-              {payouts.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-zinc-500 py-6 text-center">Aucune demande de retrait.</p>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-                  {payouts.map((p) => (
-                    <div key={p.id} className="py-4 flex items-center justify-between gap-4 text-xs">
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white text-sm">
-                          {p.amount.toLocaleString()} FCFA vers {p.wallet_provider.toUpperCase()} ({p.wallet_number})
-                        </p>
-                        <p className="text-[11px] text-gray-400 dark:text-zinc-500">
-                          Statut actuel : {p.status}
-                        </p>
-                      </div>
-
-                      {p.status !== 'completed' && (
-                        <button
-                          type="button"
-                          onClick={() => handleApprovePayout(p.id)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
-                        >
-                          Valider le versement
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Collectes */}
-          {activeTab === 'campaigns' && (
-            <div className="space-y-4">
-              {campaigns.length === 0 ? (
-                <p className="text-xs text-gray-400 dark:text-zinc-500 py-6 text-center">Aucune collecte enregistrée.</p>
-              ) : (
-                <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-                  {campaigns.map((c) => (
-                    <div key={c.id} className="py-4 flex items-center justify-between gap-4 text-xs">
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white text-sm">{c.title}</p>
-                        <p className="text-gray-500 dark:text-zinc-400">
-                          {c.collected_amount.toLocaleString()} / {c.goal_amount.toLocaleString()} FCFA • Statut :{' '}
-                          <strong className={c.status === 'suspended' ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'}>
-                            {c.status}
-                          </strong>
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        {c.status === 'suspended' ? (
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateCampaignStatus(c.id, 'active')}
-                            className="bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer border border-emerald-200/50 dark:border-emerald-800/50"
-                          >
-                            Réactiver
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateCampaignStatus(c.id, 'suspended')}
-                            className="bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 px-3 py-1.5 rounded-lg font-bold transition-colors cursor-pointer border border-red-200/50 dark:border-red-800/50"
-                          >
-                            Suspendre
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
     </div>
   )
 }
+export default AdminPage

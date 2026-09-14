@@ -350,7 +350,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             {totalRaisedNet.toLocaleString()} FCFA
           </p>
           <p className="text-[11px] text-gray-400 dark:text-zinc-500">
-            Après déduction des frais (5% + 100 FCFA)
+            Total des contributions reçues
           </p>
         </div>
 
@@ -533,10 +533,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
                       <div className="text-right">
                         <p className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400">
-                          +{d.net_amount.toLocaleString()} FCFA net
-                        </p>
-                        <p className="text-[10px] text-gray-400 dark:text-zinc-500">
-                          Brut : {d.amount.toLocaleString()} FCFA (Frais : {d.fee.toLocaleString()} FCFA)
+                          +{d.amount.toLocaleString()} FCFA
                         </p>
                       </div>
                     </div>
@@ -624,6 +621,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
                     Solde disponible : {availableBalance.toLocaleString()} FCFA (Min. 5 000 FCFA)
                   </p>
+                  {Number(payoutAmount) >= 5000 && (
+                    <div className="mt-3 p-3 bg-gray-50 dark:bg-zinc-800/60 rounded-xl border border-gray-200 dark:border-zinc-700 text-xs space-y-1">
+                      <div className="flex justify-between text-gray-500 dark:text-zinc-400">
+                        <span>Montant brut :</span>
+                        <strong className="text-gray-900 dark:text-white">{Number(payoutAmount).toLocaleString()} FCFA</strong>
+                      </div>
+                      <div className="flex justify-between text-gray-500 dark:text-zinc-400">
+                        <span>Frais de service Donkai (5%) :</span>
+                        <span>-{Math.round(Number(payoutAmount) * 0.05).toLocaleString()} FCFA</span>
+                      </div>
+                      <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold pt-1 border-t border-gray-200 dark:border-zinc-700">
+                        <span>Net versé sur Mobile Money :</span>
+                        <span>{(Number(payoutAmount) - Math.round(Number(payoutAmount) * 0.05)).toLocaleString()} FCFA</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {payoutError && (

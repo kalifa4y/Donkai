@@ -523,9 +523,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
                 <span>Optionnel maintenant, obligatoire avant publication</span>
               </div>
               <p className="text-gray-700 dark:text-zinc-300 leading-relaxed text-[11px]">
-                Vous pouvez finaliser votre compte immédiatement sans déposer de pièce d'identité. Cependant,{' '}
-                <strong>la vérification KYC sera strictement exigée avant la mise en ligne effective de toute collecte</strong>{' '}
-                afin d'empêcher les fausses cagnottes.
+                Vous pouvez finaliser votre compte immédiatement sans déposer de pièce d'identité. La vérification d'identité (KYC) ne sera demandée{' '}
+                <strong>qu'au moment où vous effectuerez votre premier retrait de fonds</strong>, pour vous permettre de lancer vos collectes sans aucune friction.
               </p>
             </div>
 
