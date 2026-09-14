@@ -1,139 +1,182 @@
-# Donkai
+# DONKAI
 
-Plateforme de donation mobile-first pour l'Afrique de l'Ouest.
-Recevez des dons via Orange Money, Wave, Moov Money et MTN MoMo — sans carte bancaire, sans compte PayPal étranger.
+**Plateforme de collecte communautaire et de micro-dons mobile-first pour l'Afrique de l'Ouest.**  
+Permet aux créateurs, porteurs de projet et associations de recevoir des contributions directes via **Orange Money**, **Wave** et **Moov Money** en FCFA (XOF) — sans carte bancaire, sans compte PayPal étranger.
 
-Lien de production : https://donkai.vercel.app/
+🔗 **Production officielle :** [https://donkai.vercel.app](https://donkai.vercel.app)  
+🏢 **Conçu et développé par :** [Oshun Web Studio](https://oshunwebstudio.netlify.app) (Bamako, Mali)
 
-## Stack technique
+---
 
-| Couche | Technologie |
-|---|---|
-| Frontend | React 19 + Vite + TypeScript |
-| Styles & Icônes | Tailwind CSS 4 + Lucide React |
-| Backend & DB | Supabase (PostgreSQL + RLS + Edge Functions) |
-| Authentification | Supabase Auth (Email + Mot de passe + Magic Link) |
-| Paiement | SasPay.me (Orange Money, Wave, Moov Money, MTN) |
-| Hébergement | Vercel |
-| Package manager | pnpm |
+## 🚀 Stack Technique
 
-## Architecture
+| Couche | Technologie | Rôle |
+|---|---|---|
+| **Frontend** | React 19 + Vite 8 + TypeScript | Interface client SPA ultra-rapide (<500 ms de build) |
+| **Styles** | Tailwind CSS 4 + Lucide React (SVG) | Design system moderne, dark mode natif, zéro emoji |
+| **Typographie** | Cal Sans + Google Sans Flex (Latin) | Polices vectorielles optimisées (<100 Ko CSS) |
+| **Backend & Base** | Supabase (PostgreSQL 15 + RLS) | Gestion des profils, collectes, dons, KYC et modération |
+| **Authentification** | Supabase Auth (Email / Mot de passe) | Sessions JWT sécurisées avec RBAC (`is_admin`) |
+| **Passerelle Paiement**| SasPay (Orange Money, Wave, Moov) | Encaissement direct Mobile Money et webhooks signés HMAC |
+| **Télémétrie** | @vercel/analytics | Statistiques d'audience et fréquentation en temps réel |
+| **Hébergement** | Vercel | Déploiement continu lié à `donkai.vercel.app` |
+| **Gestionnaire** | pnpm v10 | Gestion stricte et optimisée des dépendances |
 
+---
+
+## 🏗️ Architecture des Flux
+
+```text
+               DONATEUR / CONTRIBUTEUR
+                         ↓
+               Landing Page / Page Collecte / Profil Créateur
+                         ↓
+               Formulaire de Don (Montants prédéfinis ou libres en FCFA)
+                         ↓
+               Edge Function Supabase "create-checkout"
+                         ↓
+               SasPay Hosted Checkout (Orange Money, Wave, Moov)
+                         ↓
+               Validation Transaction Mobile Money
+                         ↓
+               Webhook SasPay signé HMAC-SHA256
+                         ↓
+               Edge Function Supabase "saspay-webhook"
+                         ↓
+               Mise à jour don ('paid') + solde collecte + journal d'audit
+                         ↓
+               Partage des fonds (95% porteur de projet / 5% plateforme)
 ```
-React Frontend (donateur ou créateur)
-   ↓
-Supabase Auth & PostgreSQL (RLS natif)
-   ↓
-Edge Function "create-checkout" (appel API serveur SasPay)
-   ↓
-SasPay Hosted Checkout (paiement Mobile Money par l'opérateur local)
-   ↓
-SasPay Webhook (notification signée HMAC-SHA256)
-   ↓
-Edge Function "saspay-webhook" (vérification signature et mise à jour 'paid')
-   ↓
-Partage des fonds (5% commission plateforme / 95% pour le créateur)
-```
 
-## Structure du projet
+---
 
-```
+## 📂 Structure Réelle du Projet
+
+```text
 donkai/
+├── public/
+│   ├── favicon.svg                   # Favicon SVG officiel
+│   ├── og-image.png                  # Image OpenGraph réseaux sociaux
+│   ├── robots.txt                    # Directives d'indexation SEO
+│   ├── sitemap.xml                   # Sitemap canonique pour les moteurs
+│   └── icons/                        # Logos officiels des opérateurs
+│       ├── orange-money.svg
+│       ├── wave.png
+│       └── moov-money.png
 ├── src/
 │   ├── components/
-│   │   ├── Navbar.tsx                # Barre de navigation
-│   │   ├── Footer.tsx                # Pied de page
-│   │   ├── DonationCard.tsx          # Formulaire de don + session SasPay
-│   │   └── Icons.tsx                 # Bibliothèque d'icônes Lucide
+│   │   ├── Navbar.tsx                # Barre de navigation responsive avec dark mode
+│   │   ├── Footer.tsx                # Pied de page avec mentions et crédits Oshun
+│   │   ├── DonationCard.tsx          # Formulaire de contribution et checkout
+│   │   ├── BuyTeaCard.tsx            # Widget de soutien micro-dons ("Offrir un thé")
+│   │   ├── CampaignUpdatesModal.tsx  # Mises à jour et actualités d'une collecte
+│   │   ├── ShareModal.tsx            # Partage social et QR code
+│   │   ├── ReportModal.tsx           # Formulaire de signalement communautaire
+│   │   ├── VerifiedBadge.tsx         # Badge de certification d'identité KYC
+│   │   ├── Icons.tsx                 # Bibliothèque centralisée d'icônes Lucide
+│   │   └── admin/                    # Composants de la console d'administration
+│   │       ├── AdminSidebar.tsx
+│   │       ├── AdminDashboardView.tsx
+│   │       ├── AdminCampaignsView.tsx
+│   │       ├── AdminUsersView.tsx
+│   │       ├── AdminDonationsView.tsx
+│   │       ├── AdminPayoutsView.tsx
+│   │       ├── AdminReportsView.tsx
+│   │       ├── AdminKycView.tsx
+│   │       ├── AdminAuditLogsView.tsx
+│   │       └── AdminModal.tsx
 │   ├── context/
-│   │   └── AuthContext.tsx           # Contexte d'authentification Supabase
+│   │   └── AuthContext.tsx           # Gestion de session Supabase Auth & profil RBAC
 │   ├── lib/
-│   │   └── supabase.ts               # Client Supabase typé
+│   │   ├── supabase.ts               # Client Supabase connecté
+│   │   └── i18n.tsx                  # Système bilingue Français / Anglais
 │   ├── pages/
-│   │   ├── HomePage.tsx              # Landing page
-│   │   ├── CreatorPage.tsx           # Page publique /@username
-│   │   ├── LoginPage.tsx             # Connexion / Inscription Supabase
-│   │   ├── OnboardingPage.tsx        # Configuration profil & wallet
-│   │   ├── DashboardPage.tsx         # Dashboard créateur & retraits
-│   │   └── SettingsPage.tsx          # Paramètres créateur
+│   │   ├── HomePage.tsx              # Landing page (héros, collectes, FAQ, stats)
+│   │   ├── ExplorePage.tsx           # Moteur de recherche et filtres de collectes
+│   │   ├── CampaignPage.tsx          # Page dédiée d'une collecte (/@username/:slug)
+│   │   ├── CreatorProfilePage.tsx    # Profil public de l'organisateur (/@username)
+│   │   ├── CreateCampaignPage.tsx    # Assistant de création de collecte multi-étapes
+│   │   ├── DashboardPage.tsx         # Tableau de bord organisateur, solde et retraits
+│   │   ├── SettingsPage.tsx          # Configuration compte, profil et wallet Mobile Money
+│   │   ├── LoginPage.tsx             # Authentification email / mot de passe
+│   │   ├── OnboardingPage.tsx        # Parcours initial de configuration du compte
+│   │   ├── AdminPage.tsx             # Console d'administration (sécurisée en mode Stealth)
+│   │   └── LiveStreamView.tsx        # Mode immersif pour streams TikTok/YouTube (/@username/:slug/live)
 │   ├── types/
-│   │   └── index.ts                  # Définitions TypeScript
-│   ├── App.tsx                       # Routeur SPA
-│   ├── index.css                     # Styles Tailwind
-│   ├── main.tsx                      # Point d'entrée React 19
-│   └── vite-env.d.ts                 # Déclarations Vite
+│   │   └── index.ts                  # Schémas et interfaces TypeScript
+│   ├── App.tsx                       # Routeur SPA dynamique + injection Vercel Analytics
+│   ├── index.css                     # Design system Tailwind v4 + imports polices Latin
+│   └── main.tsx                      # Montage racine React 19
 ├── supabase/
-│   ├── schema.sql                    # Schéma SQL (creators, donations, payouts)
-│   ├── policies.sql                  # Politiques de sécurité RLS
+│   ├── schema.sql                    # Schéma DDL complet des 7 tables PostgreSQL
+│   ├── policies.sql                  # Politiques RLS (Row Level Security)
+│   ├── init_all.sql                  # Script d'initialisation global
 │   └── functions/
-│       ├── create-checkout/
-│       │   └── index.ts              # Edge Function création checkout SasPay
-│       └── saspay-webhook/
-│           └── index.ts              # Edge Function webhook sécurisé HMAC
-├── index.html                        # Template HTML principal
-├── vite.config.ts                    # Config Vite + React + Tailwind
-├── tsconfig.json                     # Configuration TypeScript
-├── vercel.json                       # Règles de réécriture Vercel SPA
+│       ├── create-checkout/          # Edge Function création session SasPay
+│       └── saspay-webhook/           # Edge Function traitement webhook sécurisé
+├── index.html                        # Métadonnées SEO, OpenGraph et Schema.org JSON-LD
+├── vite.config.ts                    # Configuration Vite + React + Tailwind
+├── vercel.json                       # Réécritures SPA et proxies API
 └── package.json
 ```
 
-## Base de données Supabase
+---
 
-3 tables principales définies dans `supabase/schema.sql` :
+## 🗄️ Schéma de Base de Données (Supabase)
 
-- **creators** — profil lié directement à `auth.users(id)` (username, display_name, bio, wallet_provider, wallet_number)
-- **donations** — dons reçus (montant brut, fee 5%, montant net 95%, status, donor_name, donor_email, message, saspay_session_id)
-- **payouts** — historique et demandes de retraits manuels vers le wallet Mobile Money (montant, statut, wallet_provider, wallet_number)
+Toutes les tables sont protégées par **Row Level Security (RLS)** :
 
-## Core Flow (Don)
+1. **`profiles`** : Identité, pseudonyme unique, statut de vérification KYC (`unverified`, `pending`, `verified`, `restricted`), wallet Mobile Money (`orange`, `wave`, `moov`), verrouillage anti-fraude de 30 jours, rôle `is_admin`.
+2. **`campaigns`** : Multi-collectes par créateur, titre, slug unique, description, objectif financier en FCFA, montants collectés, statut (`active`, `completed`, `expired`), bénéficiaire (soi-même ou un tiers).
+3. **`donations`** : Dons enregistrés avec statut (`pending`, `paid`, `failed`), montant brut, commission plateforme 5 %, montant net 95 %, opérateur utilisé et message d'encouragement.
+4. **`payouts`** : Demandes de retraits vers le numéro Mobile Money vérifié, soumises à validation KYC à partir de 500 000 FCFA.
+5. **`reports`** : Signalements pour suspicion de fraude ou contenu inapproprié, gérés par l'équipe de modération.
+6. **`verification_records`** : Documents d'identité (CNI, passeport) chiffrés pour validation KYC.
+7. **`audit_logs`** : Traçabilité des actions d'administration et de sécurité.
 
-1. Le donateur ouvre `donkai.app/@createur`
-2. Il visualise le profil et le formulaire de don
-3. Il choisit un montant prédéfini (500, 1 000, 2 000, 5 000 XOF) ou un montant libre (minimum 100 XOF)
-4. Il renseigne son nom (ou reste anonyme), son email et un message optionnel
-5. Il clique sur "Soutenir" -> l'Edge Function crée le don `pending` et génère la session SasPay
-6. Le donateur est redirigé vers la page sécurisée SasPay pour payer avec son opérateur (Orange Money, Wave, Moov)
-7. SasPay valide la transaction et déclenche le webhook vers Supabase
-8. L'Edge Function vérifie la signature HMAC-SHA256 et passe le don à `paid`
-9. Le donateur est redirigé vers la page de succès
+---
 
-## Payout Flow (Retrait créateur)
+## 🔒 Sécurité et Administration Furtive (Stealth Mode)
 
-1. Le créateur consulte son tableau de bord et son solde disponible
-2. Dès 5 000 XOF cumulés, il peut cliquer sur "Demander un retrait"
-3. La demande est enregistrée en base (`pending`) et validée vers son numéro Mobile Money configuré
+- **Route `/admin` furtive** : Toute personne non authentifiée ou ne possédant pas les droits `is_admin: true` dans Supabase reçoit une véritable erreur **404 — Page introuvable**. Aucun écran d'identification ni formulaire de mot de passe n'est exposé publiquement.
+- **Accès administrateur** : Une fois connecté avec le compte administrateur autorisé, un raccourci exclusif **Console Système** apparaît dans le tableau de bord pour ouvrir le panneau d'administration.
+- **Contrôle d'intégrité financier** : Les calculs de montants, de commissions et de statuts sont tous validés côté serveur (Edge Functions Supabase) ; le frontend ne dicte jamais le statut d'un paiement.
+- **Signatures HMAC-SHA256** : Chaque notification de paiement SasPay est cryptographiquement vérifiée par l'Edge Function avant validation des fonds.
 
-## Installation et démarrage
+---
+
+## 💻 Démarrage Local
 
 ```bash
-# Cloner le projet
+# 1. Cloner le dépôt
 git clone https://github.com/kalifa4y/Donkai.git
 cd donkai
 
-# Installer les dépendances
+# 2. Installer les dépendances
 pnpm install
 
-# Configurer les variables d'environnement
+# 3. Configurer l'environnement
 cp .env.example .env
+# Renseigner VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY
 
-# Lancer en développement
+# 4. Lancer le serveur de développement
 pnpm dev
 
-# Compiler pour la production
+# 5. Compiler et tester le bundle de production
 pnpm build
 ```
 
-## Configuration des variables d'environnement
+---
 
-| Variable | Où la trouver |
-|---|---|
-| `VITE_SUPABASE_URL` | Supabase -> Settings -> API -> Project URL |
-| `VITE_SUPABASE_ANON_KEY` | Supabase -> Settings -> API -> Anon public key |
-| `VITE_APP_URL` | URL de votre application (ex: https://donkai.app ou http://localhost:5173) |
+## 🌐 Déploiement
 
-### Variables secrètes (Supabase Secrets / Edge Functions)
+Le projet est hébergé sur **Vercel** et synchronisé automatiquement sur la branche `main` :
 
-| Secret | Utilité |
-|---|---|
-| `SASPAY_SECRET_KEY` | Clé API secrète marchande (`sk_live_...` ou `sk_test_...`) |
-| `SASPAY_WEBHOOK_SECRET` | Secret de signature du webhook SasPay (pour contrôle HMAC) |
+- **URL de production :** `https://donkai.vercel.app`
+- **Règles de routage :** Réécritures SPA complètes via [`vercel.json`](file:///c:/Users/legion/Documents/Projet%20APP/donkai/vercel.json) pour assurer le bon fonctionnement des URLs profondes (`/@username`, `/@username/:slug`, `/admin`, etc.).
+
+---
+
+## 📄 Licence & Propriété
+
+Produit conçu, développé et détenu par **Oshun Web Studio** (Bamako, Mali). Tous droits réservés.
