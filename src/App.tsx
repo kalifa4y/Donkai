@@ -4,7 +4,8 @@ import { I18nProvider } from './lib/i18n'
 import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 
-const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
+import { HomePage } from './pages/HomePage'
+
 const ExplorePage = lazy(() => import('./pages/ExplorePage').then((m) => ({ default: m.ExplorePage })))
 const CampaignPage = lazy(() => import('./pages/CampaignPage').then((m) => ({ default: m.CampaignPage })))
 const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage').then((m) => ({ default: m.CreatorProfilePage })))

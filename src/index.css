@@ -1,8 +1,8 @@
-@import "@fontsource/cal-sans";
-@import "@fontsource/google-sans-flex/400.css";
-@import "@fontsource/google-sans-flex/500.css";
-@import "@fontsource/google-sans-flex/600.css";
-@import "@fontsource/google-sans-flex/700.css";
+@import "@fontsource/cal-sans/latin-400.css";
+@import "@fontsource/google-sans-flex/latin-400.css";
+@import "@fontsource/google-sans-flex/latin-500.css";
+@import "@fontsource/google-sans-flex/latin-600.css";
+@import "@fontsource/google-sans-flex/latin-700.css";
 
 /* Map Cal Sans to 600 and 700 weights so headings render authentic Cal Sans vectors without faux-bolding */
 @font-face {
