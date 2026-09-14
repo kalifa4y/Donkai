@@ -1,5 +1,5 @@
 import React from 'react'
-import { Globe } from './Icons'
+import { Globe, ExternalLink } from './Icons'
 import { useI18n } from '../lib/i18n'
 
 interface FooterProps {
@@ -37,11 +37,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
               Plateforme mobile-first de solidarité et de financement communautaire en Afrique de l'Ouest.
             </p>
 
-            {/* Mention de Propriété Oshun Web Studio */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200/70 dark:border-zinc-800 text-[11px] font-semibold text-gray-700 dark:text-zinc-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Un produit conçu, développé et détenu par <strong>Oshun Web Studio</strong></span>
-            </div>
+            {/* Mention de Propriété Oshun Web Studio avec lien vers le site officiel */}
+            <a
+              href="https://oshunwebstudio.netlify.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-gray-50 hover:bg-orange-50/70 dark:bg-zinc-900 dark:hover:bg-zinc-800/90 border border-gray-200/70 hover:border-orange-300 dark:border-zinc-800 dark:hover:border-zinc-700 text-[11px] font-semibold text-gray-700 hover:text-orange-600 dark:text-zinc-300 dark:hover:text-orange-400 transition-all duration-200 group shadow-xs"
+              title="Visiter le site officiel d'Oshun Web Studio"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>
+                Un produit conçu, développé et détenu par{' '}
+                <strong className="font-bold underline decoration-gray-300 dark:decoration-zinc-700 group-hover:decoration-orange-500 transition-colors">
+                  Oshun Web Studio
+                </strong>
+              </span>
+              <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-orange-500 transition-colors shrink-0" />
+            </a>
           </div>
 
           {/* Vrais logos officiels des opérateurs de paiement */}
@@ -73,7 +85,17 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
 
         {/* Ligne inférieure : Droits réservés & Langue (Pas de lien modération public) */}
         <div className="pt-6 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400 dark:text-zinc-500">
-          <p>© {new Date().getFullYear()} DONKAI • Tous droits réservés • Oshun Web Studio</p>
+          <p>
+            © {new Date().getFullYear()} DONKAI • Tous droits réservés •{' '}
+            <a
+              href="https://oshunwebstudio.netlify.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-gray-500 hover:text-orange-600 dark:text-zinc-400 dark:hover:text-orange-400 underline decoration-gray-300 dark:decoration-zinc-700 hover:decoration-orange-500 transition-colors"
+            >
+              Oshun Web Studio
+            </a>
+          </p>
 
           <div className="flex items-center gap-4">
             <button
