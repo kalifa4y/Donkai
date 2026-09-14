@@ -2,21 +2,21 @@ import { test, expect } from '@playwright/test'
 import { calculateDonationFee, canUpdateWalletNumber } from '../src/types/index'
 
 test.describe('Donkai Business Rules Audit', () => {
-  test('Financial Fee: 5% + 100 FCFA strict calculation', () => {
-    // 1000 FCFA -> 50 + 100 = 150 fee -> 850 net
+  test('Financial Fee: 5% strict calculation (no fixed fee)', () => {
+    // 1000 FCFA -> 50 fee -> 950 net
     const res1 = calculateDonationFee(1000)
-    expect(res1.fee).toBe(150)
-    expect(res1.netAmount).toBe(850)
+    expect(res1.fee).toBe(50)
+    expect(res1.netAmount).toBe(950)
 
-    // 5000 FCFA -> 250 + 100 = 350 fee -> 4650 net
+    // 5000 FCFA -> 250 fee -> 4750 net
     const res2 = calculateDonationFee(5000)
-    expect(res2.fee).toBe(350)
-    expect(res2.netAmount).toBe(4650)
+    expect(res2.fee).toBe(250)
+    expect(res2.netAmount).toBe(4750)
 
-    // 10000 FCFA -> 500 + 100 = 600 fee -> 9400 net
+    // 10000 FCFA -> 500 fee -> 9500 net
     const res3 = calculateDonationFee(10000)
-    expect(res3.fee).toBe(600)
-    expect(res3.netAmount).toBe(9400)
+    expect(res3.fee).toBe(500)
+    expect(res3.netAmount).toBe(9500)
 
     // Under 100 FCFA -> 0 fee, 0 net (invalid)
     const resZero = calculateDonationFee(50)

@@ -2,38 +2,60 @@ import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import {
-  Target,
   ArrowRight,
+  ArrowLeft,
   Loader2,
   AlertCircle,
-  Users,
-  Info,
   ShieldCheck,
+  CheckCircle2,
+  Sparkles,
 } from '../components/Icons'
 
 interface CreateCampaignPageProps {
   onNavigate: (path: string) => void
 }
 
-export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNavigate }) => {
-  const { user, profile, loading: authLoading } = useAuth()
+const CATEGORIES = [
+  'Solidarité & Entraide',
+  'Santé & Urgence médicale',
+  'Eau & Infrastructure',
+  'Éducation & Enfance',
+  'Projet Communautaire',
+  'Culture & Création',
+]
 
+const QUICK_GOALS = [250000, 500000, 1000000, 2500000]
+
+export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNavigate }) => {
+  const { user, profile, refreshProfile, loading: authLoading } = useAuth()
+
+  // Wizard étape (1: Projet, 2: Objectif & Bénéficiaire, 3: KYC & Publication)
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1)
+
+  // Étape 1 : Le Projet
   const [title, setTitle] = useState('')
+  const [category, setCategory] = useState(CATEGORIES[0])
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
+
+  // Étape 2 : Objectif & Bénéficiaire
   const [goalAmount, setGoalAmount] = useState<number | ''>(500000)
   const [endDate, setEndDate] = useState<string>(() => {
-    // Par défaut 60 jours dans le futur (durée max 2 ans)
     const d = new Date()
     d.setDate(d.getDate() + 60)
     return d.toISOString().split('T')[0]
   })
-
-  // Gestion du bénéficiaire (soi-même ou un tiers)
   const [beneficiaryType, setBeneficiaryType] = useState<'self' | 'other'>('self')
   const [beneficiaryName, setBeneficiaryName] = useState('')
-  const [beneficiaryEmail, setBeneficiaryEmail] = useState('')
   const [beneficiaryPhone, setBeneficiaryPhone] = useState('')
+
+  // Étape 3 : KYC express (obligatoire pour créer une collecte)
+  const [docType, setDocType] = useState('cni')
+  const [docNumber, setDocNumber] = useState('')
+  const [payoutNumber, setPayoutNumber] = useState(profile?.wallet_number || '')
+  const [payoutProvider, setPayoutProvider] = useState<'orange' | 'wave' | 'moov'>(
+    (profile?.wallet_provider as any) || 'orange'
+  )
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,13 +66,22 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
     }
   }, [user, authLoading, onNavigate])
 
-  // Génération automatique d'un slug propre à partir du titre
+  useEffect(() => {
+    if (profile?.wallet_number && !payoutNumber) {
+      setPayoutNumber(profile.wallet_number)
+    }
+    if (profile?.wallet_provider) {
+      setPayoutProvider(profile.wallet_provider as any)
+    }
+  }, [profile])
+
+  // Génération automatique d'un slug propre
   const handleTitleChange = (val: string) => {
     setTitle(val)
     const generatedSlug = val
       .toLowerCase()
       .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '') // supprime les accents
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/[^a-z0-9\s-]/g, '')
       .trim()
       .replace(/\s+/g, '-')
@@ -58,28 +89,35 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
     setSlug(generatedSlug)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const formatFcfa = (val: number): string => {
+    return (val || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  }
+
+  // Validation étape 1
+  const handleGoToStep2 = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-
-    if (!user) {
-      onNavigate('/login')
+    if (!title.trim() || title.trim().length < 5) {
+      setError('Veuillez donner un titre clair à votre collecte (au moins 5 caractères).')
       return
     }
-
-    if (!title.trim()) {
-      setError('Veuillez donner un titre clair à votre collecte.')
+    if (!description.trim() || description.trim().length < 20) {
+      setError('Veuillez décrire le projet avec plus de précision (au moins 20 caractères).')
       return
     }
+    setCurrentStep(2)
+  }
 
-    const cleanSlug = slug.trim() || 'collecte'
+  // Validation étape 2
+  const handleGoToStep3 = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
     const numGoal = Number(goalAmount)
     if (!numGoal || numGoal < 1000) {
       setError('L’objectif financier minimal est de 1 000 FCFA.')
       return
     }
 
-    // Vérification durée maximale 2 ans
     const chosenDate = new Date(endDate).getTime()
     const maxDate = Date.now() + 2 * 365 * 24 * 60 * 60 * 1000
     if (chosenDate > maxDate) {
@@ -88,183 +126,356 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
     }
 
     if (beneficiaryType === 'other' && (!beneficiaryName.trim() || !beneficiaryPhone.trim())) {
-      setError('Veuillez indiquer le nom et le numéro du bénéficiaire désigné.')
+      setError('Veuillez indiquer le nom et le numéro WhatsApp / Mobile Money du bénéficiaire désigné.')
+      return
+    }
+
+    setCurrentStep(3)
+  }
+
+  // Lancement final de la collecte (Étape 3 avec KYC obligatoire)
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    if (!user) {
+      onNavigate('/login')
+      return
+    }
+
+    // Si l'utilisateur n'est pas encore vérifié, la saisie KYC est obligatoire
+    const isAlreadyVerified = profile?.verification_status === 'verified'
+    if (!isAlreadyVerified && !docNumber.trim()) {
+      setError('Le numéro de votre pièce d’identité (CNI / Passeport) est requis pour valider votre collecte.')
+      return
+    }
+
+    if (!payoutNumber.trim()) {
+      setError('Le numéro de réception Mobile Money est obligatoire pour percevoir les dons.')
       return
     }
 
     setSubmitting(true)
 
     try {
-      // 1. Déterminer l'user_id profil
+      // 1. Déterminer l'ID du profil Supabase
       let userId = profile?.id
+      let currentUsername = profile?.username
+
       if (!userId) {
-        // Si le profil n'est pas encore synchronisé en base, le créer ou chercher
         const { data: profData } = await supabase
           .from('profiles')
-          .select('id')
+          .select('id, username')
           .eq('clerk_user_id', user.id)
           .maybeSingle()
 
         if (profData) {
           userId = profData.id
+          currentUsername = profData.username
         } else {
-          // Insertion de base de secours
+          // Création express du profil s'il n'existait pas encore
+          const cleanUsername =
+            user.fullName?.toLowerCase().replace(/[^a-z0-9]/g, '') || `user_${Date.now()}`
           const { data: newProf, error: profErr } = await supabase
             .from('profiles')
             .insert({
               clerk_user_id: user.id,
-              username: user.fullName?.toLowerCase().replace(/[^a-z0-9]/g, '') || `user_${Date.now()}`,
+              username: cleanUsername,
               display_name: user.fullName || 'Organisateur Donkai',
               email: user.email,
+              wallet_number: payoutNumber.trim(),
+              wallet_provider: payoutProvider,
+              verification_status: 'verified', // validé par saisie pièce d'identité
             })
             .select('id, username')
             .single()
 
-          if (!profErr && newProf) {
-            userId = newProf.id
+          if (profErr || !newProf) {
+            throw new Error(profErr?.message || 'Erreur lors de la configuration du profil.')
           }
+          userId = newProf.id
+          currentUsername = newProf.username
         }
       }
 
-      const campaignPayload = {
-        user_id: userId || '00000000-0000-0000-0000-000000000000',
-        title: title.trim(),
-        slug: cleanSlug,
-        description: description.trim(),
-        goal_amount: numGoal,
-        collected_amount: 0,
-        contributions_count: 0,
-        currency: 'XOF',
-        status: 'active',
-        start_date: new Date().toISOString(),
-        end_date: new Date(endDate).toISOString(),
-        beneficiary_type: beneficiaryType,
-        beneficiary_name: beneficiaryType === 'other' ? beneficiaryName.trim() : null,
-        beneficiary_email: beneficiaryType === 'other' ? beneficiaryEmail.trim() : null,
-        beneficiary_phone: beneficiaryType === 'other' ? beneficiaryPhone.trim() : null,
-        beneficiary_claimed: beneficiaryType === 'self',
+      // 2. Mettre à jour les informations KYC et wallet du profil
+      await supabase
+        .from('profiles')
+        .update({
+          wallet_number: payoutNumber.trim(),
+          wallet_provider: payoutProvider,
+          verification_status: 'verified',
+        })
+        .eq('id', userId)
+
+      // Enregistrer l'enregistrement KYC dans verification_records
+      if (docNumber.trim()) {
+        await supabase.from('verification_records').insert({
+          user_id: userId,
+          document_type: docType,
+          document_number: docNumber.trim(),
+          status: 'verified',
+        })
       }
 
-      const { error: insertError } = await supabase
+      // 3. Créer la collecte en base de données
+      const cleanSlug = slug.trim() || `collecte-${Date.now().toString().slice(-4)}`
+      const numGoal = Number(goalAmount) || 500000
+
+      const { data: newCampaign, error: campErr } = await supabase
         .from('campaigns')
-        .insert(campaignPayload)
-        .select('*')
+        .insert({
+          user_id: userId,
+          title: title.trim(),
+          slug: cleanSlug,
+          description: description.trim(),
+          goal_amount: numGoal,
+          currency: 'XOF',
+          status: 'active',
+          end_date: new Date(endDate).toISOString(),
+          beneficiary_type: beneficiaryType,
+          beneficiary_name: beneficiaryType === 'other' ? beneficiaryName.trim() : null,
+          beneficiary_phone: beneficiaryType === 'other' ? beneficiaryPhone.trim() : null,
+        })
+        .select('id, slug')
         .single()
 
-      if (insertError) {
-        // Enregistrement local de secours
-        const userUsername = profile?.username || user.fullName || 'organisateur'
-        const localCampaigns = JSON.parse(localStorage.getItem('donkai_local_campaigns') || '[]')
-        localCampaigns.unshift({
-          ...campaignPayload,
-          id: `local_camp_${Date.now()}`,
-        })
-        localStorage.setItem('donkai_local_campaigns', JSON.stringify(localCampaigns))
-
-        onNavigate(`/@${userUsername}/${cleanSlug}`)
-        return
+      if (campErr) {
+        throw new Error(campErr.message || 'Erreur lors de la publication de la collecte.')
       }
 
-      const targetUsername = profile?.username || 'mon-profil'
-      onNavigate(`/@${targetUsername}/${cleanSlug}`)
+      await refreshProfile()
+
+      // Redirection immédiate vers la page publique de la collecte créée
+      onNavigate(`/@${currentUsername || 'me'}/${newCampaign.slug}`)
     } catch (err) {
-      setError((err as Error).message || 'Erreur lors de la création de la collecte.')
+      console.error('Erreur création collecte:', err)
+      setError((err as Error).message || 'Une erreur est survenue lors de la publication.')
       setSubmitting(false)
     }
   }
 
+  const usernameDisplay = profile?.username || user?.fullName?.toLowerCase().replace(/[^a-z0-9]/g, '') || 'votre-nom'
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-10 space-y-8 text-left">
-      <div>
-        <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300 border border-orange-200/60 dark:border-orange-900/50 text-xs font-bold mb-3">
-          <Target className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
-          <span>Nouvelle collecte d'objectifs</span>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 space-y-8">
+      {/* En-tête Wizard */}
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 text-orange-700 dark:text-orange-400 text-xs font-bold uppercase tracking-wider">
+          <Sparkles className="w-3.5 h-3.5" />
+          <span>Lancement de collecte</span>
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-950 dark:text-white tracking-tight">
-          Lancez votre collecte
+        <h1 className="font-heading font-extrabold text-2xl sm:text-3xl text-gray-950 dark:text-white tracking-tight">
+          Créer votre collecte communautaire
         </h1>
-        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1 leading-relaxed">
-          Définissez votre projet, votre objectif et commencez à recevoir le soutien direct de votre communauté.
+        <p className="text-xs sm:text-sm text-gray-500 dark:text-zinc-400 max-w-lg mx-auto">
+          Collectez facilement des fonds via Orange Money, Wave et Moov Money en quelques étapes rapides.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Titre & Slug */}
-        <div className="bg-white dark:bg-[#12141f] p-6 sm:p-7 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-4">
-          <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
-            1. Présentation de la collecte
-          </h2>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
-              Titre clair de votre objectif *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder="Ex: Financement d’un forage d’eau potable pour Gao"
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-            />
+      {/* Barre de progression Wizard */}
+      <div className="bg-white dark:bg-[#12131a] rounded-2xl p-3 sm:p-4 border border-gray-100 dark:border-zinc-800 shadow-xs">
+        <div className="grid grid-cols-3 gap-2 text-center text-xs font-bold">
+          {/* Étape 1 */}
+          <div
+            onClick={() => currentStep > 1 && setCurrentStep(1)}
+            className={`flex items-center justify-center gap-2 p-2 rounded-xl transition-colors ${
+              currentStep === 1
+                ? 'bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400'
+                : currentStep > 1
+                ? 'text-gray-700 dark:text-zinc-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800'
+                : 'text-gray-400 dark:text-zinc-600'
+            }`}
+          >
+            <span className="w-5 h-5 rounded-full bg-orange-600 text-white text-[11px] flex items-center justify-center">
+              1
+            </span>
+            <span className="hidden sm:inline">Le Projet</span>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
-              Lien dédié de votre collecte (URL) *
-            </label>
-            <div className="flex items-center border border-gray-200 dark:border-zinc-700 rounded-xl overflow-hidden text-xs font-mono bg-gray-50 dark:bg-zinc-900">
-              <span className="px-3 py-3 text-gray-500 dark:text-zinc-400 border-r border-gray-200 dark:border-zinc-800 shrink-0">
-                donkai.app/@{profile?.username || 'votre-nom'}/
-              </span>
+          {/* Étape 2 */}
+          <div
+            onClick={() => currentStep > 2 && setCurrentStep(2)}
+            className={`flex items-center justify-center gap-2 p-2 rounded-xl transition-colors ${
+              currentStep === 2
+                ? 'bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400'
+                : currentStep > 2
+                ? 'text-gray-700 dark:text-zinc-300 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800'
+                : 'text-gray-400 dark:text-zinc-600'
+            }`}
+          >
+            <span
+              className={`w-5 h-5 rounded-full text-[11px] flex items-center justify-center ${
+                currentStep >= 2 ? 'bg-orange-600 text-white' : 'bg-gray-200 dark:bg-zinc-800 text-gray-500'
+              }`}
+            >
+              2
+            </span>
+            <span className="hidden sm:inline">Objectif & Bénéficiaire</span>
+          </div>
+
+          {/* Étape 3 */}
+          <div
+            className={`flex items-center justify-center gap-2 p-2 rounded-xl transition-colors ${
+              currentStep === 3
+                ? 'bg-orange-50 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400'
+                : 'text-gray-400 dark:text-zinc-600'
+            }`}
+          >
+            <span
+              className={`w-5 h-5 rounded-full text-[11px] flex items-center justify-center ${
+                currentStep === 3 ? 'bg-orange-600 text-white' : 'bg-gray-200 dark:bg-zinc-800 text-gray-500'
+              }`}
+            >
+              3
+            </span>
+            <span className="hidden sm:inline">Sécurité & Lancement</span>
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-2xl flex items-start gap-3 text-xs text-red-700 dark:text-red-300 animate-fade-in">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-red-600" />
+          <div className="flex-1 font-medium leading-relaxed">{error}</div>
+        </div>
+      )}
+
+      {/* CONTENU DU WIZARD */}
+      <div className="bg-white dark:bg-[#12131a] rounded-3xl p-6 sm:p-9 border border-gray-100 dark:border-zinc-800/80 shadow-xl shadow-orange-950/5">
+        {/* ÉTAPE 1 : LE PROJET */}
+        {currentStep === 1 && (
+          <form onSubmit={handleGoToStep2} className="space-y-6">
+            <div>
+              <h2 className="font-heading font-bold text-lg sm:text-xl text-gray-950 dark:text-white">
+                Étape 1 : Présentation de votre projet
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                Donnez envie à votre communauté de se mobiliser pour votre cause.
+              </p>
+            </div>
+
+            {/* Titre */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-2">
+                Titre de votre collecte *
+              </label>
               <input
                 type="text"
                 required
-                value={slug}
-                onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                className="flex-1 bg-white dark:bg-zinc-800 px-3 py-3 text-gray-900 dark:text-white font-bold outline-none"
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="Ex: Forage d'eau potable pour le village de Gao"
+                className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-3 px-4 text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600"
               />
             </div>
-            <p className="text-[11px] text-gray-400 dark:text-zinc-500 mt-1">
-              Cette URL unique sera partagée sur vos réseaux sociaux (TikTok, WhatsApp, etc.).
-            </p>
-          </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
-              Description complète de votre projet *
-            </label>
-            <textarea
-              required
-              rows={4}
-              placeholder="Expliquez pourquoi ce projet est important, comment les fonds seront utilisés, et quel sera l’impact..."
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs sm:text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none resize-none leading-relaxed"
-            />
-          </div>
-        </div>
-
-        {/* Objectif & Durée */}
-        <div className="bg-white dark:bg-[#12141f] p-6 sm:p-7 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-4">
-          <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
-            2. Objectif financier & Calendrier
-          </h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Catégorie */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
-                Montant recherché (FCFA) *
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-2">
+                Catégorie du projet
               </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setCategory(cat)}
+                    className={`p-2.5 rounded-xl text-xs font-bold border transition-all text-center cursor-pointer ${
+                      category === cat
+                        ? 'border-orange-600 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300'
+                        : 'border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/40 text-gray-700 dark:text-zinc-300 hover:border-gray-300'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-2">
+                Histoire et objectif de la collecte *
+              </label>
+              <textarea
+                required
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Expliquez en détail pourquoi cette initiative est importante, à quoi serviront les fonds collectés et qui en bénéficiera..."
+                className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-3 px-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600 resize-none leading-relaxed"
+              />
+            </div>
+
+            {/* Aperçu de l'URL publique */}
+            <div className="p-3.5 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-200/60 dark:border-zinc-700/60 text-xs">
+              <span className="text-gray-400 dark:text-zinc-500 font-bold block mb-1">
+                Lien public dédié de votre collecte :
+              </span>
+              <span className="font-mono text-orange-600 dark:text-orange-400 font-bold break-all">
+                https://donkai.app/@{usernameDisplay}/{slug || 'votre-slug'}
+              </span>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-heading font-bold py-3 px-7 rounded-2xl transition-all shadow-md shadow-orange-600/20 cursor-pointer text-sm"
+              >
+                <span>Étape suivante : Objectif</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ÉTAPE 2 : OBJECTIF & BÉNÉFICIAIRE */}
+        {currentStep === 2 && (
+          <form onSubmit={handleGoToStep3} className="space-y-6">
+            <div>
+              <h2 className="font-heading font-bold text-lg sm:text-xl text-gray-950 dark:text-white">
+                Étape 2 : Objectif financier & Bénéficiaire
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                Définissez le montant cible en FCFA et désignez qui recevra les fonds.
+              </p>
+            </div>
+
+            {/* Montant Cible */}
+            <div className="space-y-2">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300">
+                Montant cible à collecter (FCFA) *
+              </label>
+
+              {/* Suggestions rapides */}
+              <div className="grid grid-cols-4 gap-2 mb-2">
+                {QUICK_GOALS.map((q) => (
+                  <button
+                    key={q}
+                    type="button"
+                    onClick={() => setGoalAmount(q)}
+                    className={`py-2 px-1 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                      goalAmount === q
+                        ? 'border-orange-600 bg-orange-600 text-white shadow-xs'
+                        : 'border-gray-200 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800/50 text-gray-800 dark:text-zinc-200'
+                    }`}
+                  >
+                    {formatFcfa(q)}
+                  </button>
+                ))}
+              </div>
+
               <div className="relative">
                 <input
                   type="number"
                   min="1000"
-                  step="500"
+                  step="1000"
                   required
                   value={goalAmount}
                   onChange={(e) => setGoalAmount(e.target.value === '' ? '' : Number(e.target.value))}
-                  className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  placeholder="Montant cible en FCFA..."
+                  className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-3 pl-4 pr-16 text-base font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30 focus:border-orange-600"
                 />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400 dark:text-zinc-500">
                   FCFA
@@ -272,145 +483,287 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               </div>
             </div>
 
+            {/* Date d'échéance */}
             <div>
-              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
-                Date de fin (max. 2 ans) *
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-2">
+                Date de fin de la collecte (optionnel, max 2 ans)
               </label>
               <input
                 type="date"
-                required
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-2.5 px-4 text-xs sm:text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30"
               />
             </div>
-          </div>
 
-          {/* Frais Donkai affichés clairement à la création */}
-          <div className="p-4 bg-orange-50/60 dark:bg-orange-950/30 border border-orange-200/70 dark:border-orange-900/50 rounded-2xl flex items-start gap-3">
-            <Info className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
-            <div className="text-xs text-orange-900 dark:text-orange-300 space-y-1">
-              <p className="font-bold">Tarification transparente validée :</p>
-              <p className="text-orange-800 dark:text-orange-300/90">
-                <strong>5 % + 100 FCFA</strong> sont prélevés par contribution et déduits du montant reçu par le bénéficiaire. <strong>Aucun frais supplémentaire</strong> n'est appliqué lors du retrait des fonds.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Choix du bénéficiaire */}
-        <div className="bg-white dark:bg-[#12141f] p-6 sm:p-7 rounded-3xl border border-orange-100/80 dark:border-zinc-800 shadow-xs space-y-4">
-          <h2 className="text-base font-extrabold text-gray-950 dark:text-white pb-2 border-b border-gray-100 dark:border-zinc-800">
-            3. Bénéficiaire des fonds
-          </h2>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setBeneficiaryType('self')}
-              className={`p-4 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                beneficiaryType === 'self'
-                  ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/40 text-orange-950 dark:text-orange-200 ring-2 ring-orange-500'
-                  : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 text-gray-700 dark:text-zinc-300 bg-gray-50/50 dark:bg-zinc-900/50'
-              }`}
-            >
-              <ShieldCheck className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              <span>Pour moi-même</span>
-              <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-normal">Vous recevrez les fonds</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setBeneficiaryType('other')}
-              className={`p-4 rounded-2xl border text-xs font-bold flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                beneficiaryType === 'other'
-                  ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/40 text-orange-950 dark:text-orange-200 ring-2 ring-orange-500'
-                  : 'border-gray-200 dark:border-zinc-800 hover:border-gray-300 dark:hover:border-zinc-700 text-gray-700 dark:text-zinc-300 bg-gray-50/50 dark:bg-zinc-900/50'
-              }`}
-            >
-              <Users className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-              <span>Pour un tiers / Association</span>
-              <span className="text-[10px] text-gray-500 dark:text-zinc-400 font-normal">Fonds versés au bénéficiaire</span>
-            </button>
-          </div>
-
-          {beneficiaryType === 'other' && (
+            {/* Bénéficiaire désigné */}
             <div className="space-y-3 pt-2">
-              <div className="p-3.5 bg-blue-50/80 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-xl text-xs text-blue-900 dark:text-blue-300 leading-relaxed">
-                Une invitation sera transmise au bénéficiaire pour revendiquer et vérifier ses informations de réception. En tant qu'organisateur, vous ne pourrez pas détourner les fonds qui lui sont destinés.
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                  Nom complet du bénéficiaire ou de l’organisation *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ex: Association Solidarité Tombouctou"
-                  value={beneficiaryName}
-                  onChange={(e) => setBeneficiaryName(e.target.value)}
-                  className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                />
-              </div>
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300">
+                À qui sont destinés les fonds collectés ?
+              </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                    Numéro de téléphone Mobile Money *
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+223 70 00 00 00"
-                    value={beneficiaryPhone}
-                    onChange={(e) => setBeneficiaryPhone(e.target.value)}
-                    className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setBeneficiaryType('self')}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                    beneficiaryType === 'self'
+                      ? 'border-orange-600 bg-orange-50/70 dark:bg-orange-950/40 shadow-xs'
+                      : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/40 hover:bg-gray-50'
+                  }`}
+                >
+                  <strong className="block text-xs font-bold text-gray-950 dark:text-white">
+                    Pour moi-même
+                  </strong>
+                  <span className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5 block">
+                    Les fonds seront versés directement sur mon numéro Mobile Money.
+                  </span>
+                </button>
 
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1">
-                    Adresse email du bénéficiaire
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="contact@association.org"
-                    value={beneficiaryEmail}
-                    onChange={(e) => setBeneficiaryEmail(e.target.value)}
-                    className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-3.5 py-2.5 text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-                  />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => setBeneficiaryType('other')}
+                  className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                    beneficiaryType === 'other'
+                      ? 'border-orange-600 bg-orange-50/70 dark:bg-orange-950/40 shadow-xs'
+                      : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50 dark:bg-zinc-800/40 hover:bg-gray-50'
+                  }`}
+                >
+                  <strong className="block text-xs font-bold text-gray-950 dark:text-white">
+                    Pour une autre personne ou cause
+                  </strong>
+                  <span className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5 block">
+                    Pour un proche, une famille ou une communauté dans le besoin.
+                  </span>
+                </button>
               </div>
-            </div>
-          )}
-        </div>
 
-        {error && (
-          <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-300 rounded-2xl text-xs font-medium flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
-            <span>{error}</span>
-          </div>
+              {beneficiaryType === 'other' && (
+                <div className="p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-2xl border border-gray-200/60 dark:border-zinc-700/60 space-y-3 animate-fade-in">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 mb-1">
+                      Nom complet du bénéficiaire *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={beneficiaryName}
+                      onChange={(e) => setBeneficiaryName(e.target.value)}
+                      placeholder="Ex: Famille Diallo"
+                      className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl py-2 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-700 dark:text-zinc-300 mb-1">
+                      Numéro WhatsApp ou Mobile Money du bénéficiaire *
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={beneficiaryPhone}
+                      onChange={(e) => setBeneficiaryPhone(e.target.value)}
+                      placeholder="+223 70 00 00 00"
+                      className="w-full bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl py-2 px-3 text-xs text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(1)}
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Retour</span>
+              </button>
+
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-heading font-bold py-3 px-7 rounded-2xl transition-all shadow-md shadow-orange-600/20 cursor-pointer text-sm"
+              >
+                <span>Étape suivante : Sécurité KYC</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </form>
         )}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-4 px-6 rounded-2xl shadow-lg shadow-orange-500/20 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
-        >
-          {submitting ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Création de votre collecte...</span>
-            </>
-          ) : (
-            <>
-              <span>Publier et activer ma collecte</span>
-              <ArrowRight className="w-4 h-4" />
-            </>
-          )}
-        </button>
-      </form>
+        {/* ÉTAPE 3 : CONTRÔLE KYC & PUBLICATION OFFICIELLE */}
+        {currentStep === 3 && (
+          <form onSubmit={handleFinalSubmit} className="space-y-6">
+            <div>
+              <h2 className="font-heading font-bold text-lg sm:text-xl text-gray-950 dark:text-white flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-600" />
+                <span>Étape 3 : Contrôle de sécurité & Lancement</span>
+              </h2>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-1">
+                Conformément aux règles de sécurité DONKAI, la vérification d'identité est obligatoire avant de publier une collecte.
+              </p>
+            </div>
+
+            {/* Récapitulatif du projet */}
+            <div className="p-4 bg-orange-50/60 dark:bg-orange-950/30 rounded-2xl border border-orange-200/70 dark:border-orange-900/40 space-y-2 text-xs">
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-zinc-400 font-medium">Titre de la collecte :</span>
+                <strong className="text-gray-900 dark:text-white text-right max-w-xs">{title}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-zinc-400 font-medium">Objectif financier :</span>
+                <strong className="text-orange-600 dark:text-orange-400 font-bold">{formatFcfa(Number(goalAmount) || 0)} FCFA</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600 dark:text-zinc-400 font-medium">Frais plateforme :</span>
+                <span className="text-emerald-700 dark:text-emerald-400 font-bold">5 % uniquement (zéro frais fixe)</span>
+              </div>
+            </div>
+
+            {/* Coordonnées de versement Mobile Money */}
+            <div className="space-y-3">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300">
+                Numéro Mobile Money de réception des fonds *
+              </label>
+
+              {/* Sélection opérateur avec vrais logos */}
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayoutProvider('orange')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    payoutProvider === 'orange'
+                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/40'
+                      : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50'
+                  }`}
+                >
+                  <img src="/icons/orange-money.svg" alt="Orange" className="h-4 w-auto" />
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">Orange</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPayoutProvider('wave')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    payoutProvider === 'wave'
+                      ? 'border-sky-500 bg-sky-50 dark:bg-sky-950/40'
+                      : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50'
+                  }`}
+                >
+                  <img src="/icons/wave.png" alt="Wave" className="h-4 w-auto" />
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">Wave</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPayoutProvider('moov')}
+                  className={`p-2.5 rounded-xl border flex items-center justify-center gap-2 transition-all cursor-pointer ${
+                    payoutProvider === 'moov'
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/40'
+                      : 'border-gray-200 dark:border-zinc-800 bg-gray-50/50'
+                  }`}
+                >
+                  <img src="/icons/moov-money.png" alt="Moov" className="h-4 w-auto" />
+                  <span className="text-xs font-bold text-gray-900 dark:text-white">Moov</span>
+                </button>
+              </div>
+
+              <input
+                type="tel"
+                required
+                value={payoutNumber}
+                onChange={(e) => setPayoutNumber(e.target.value)}
+                placeholder="Numéro Mobile Money (Ex: +223 70 00 00 00)"
+                className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-2.5 px-4 text-xs sm:text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30"
+              />
+            </div>
+
+            {/* Vérification KYC : CNI / Passeport */}
+            <div className="space-y-3 pt-2">
+              <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300">
+                Pièce d'identité officielle du porteur de projet *
+              </label>
+
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDocType('cni')}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                    docType === 'cni'
+                      ? 'border-orange-600 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300'
+                      : 'border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-zinc-400'
+                  }`}
+                >
+                  CNI / NINA
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDocType('passeport')}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                    docType === 'passeport'
+                      ? 'border-orange-600 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300'
+                      : 'border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-zinc-400'
+                  }`}
+                >
+                  Passeport
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDocType('permis')}
+                  className={`p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
+                    docType === 'permis'
+                      ? 'border-orange-600 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-300'
+                      : 'border-gray-200 dark:border-zinc-800 text-gray-600 dark:text-zinc-400'
+                  }`}
+                >
+                  Permis
+                </button>
+              </div>
+
+              <input
+                type="text"
+                required
+                value={docNumber}
+                onChange={(e) => setDocNumber(e.target.value)}
+                placeholder="Numéro du document d'identité officiel..."
+                className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-2.5 px-4 text-xs sm:text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30"
+              />
+              <span className="text-[11px] text-gray-400 dark:text-zinc-500 block leading-tight">
+                Vos données sont strictement cryptées et traitées selon les normes de conformité anti-fraude d'Oshun Web Studio.
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between pt-3">
+              <button
+                type="button"
+                onClick={() => setCurrentStep(2)}
+                className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl border border-gray-200 dark:border-zinc-700 text-xs font-bold text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Retour</span>
+              </button>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 disabled:opacity-60 text-white font-heading font-bold py-3.5 px-8 rounded-2xl transition-all shadow-lg shadow-orange-600/20 cursor-pointer text-sm"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Création et publication...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Publier ma collecte en direct</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   )
 }

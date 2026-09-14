@@ -89,10 +89,8 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: 'Cette collecte n’accepte plus de contributions' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
-    }
-
-    // 3. Calcul strict des frais côté serveur (5% + 100 FCFA)
-    const fee = Math.round(parsedAmount * 0.05 + 100)
+        // 3. Calcul strict des frais côté serveur (5% uniquement)
+    const fee = Math.round(parsedAmount * 0.05)
     const netAmount = Math.max(0, parsedAmount - fee)
 
     // 4. Enregistrer la contribution en état "pending"
@@ -122,70 +120,65 @@ Deno.serve(async (req) => {
       )
     }
 
-    // 5. Initier la session de paiement sécurisée auprès de l'agrégateur si configuré
-    if (SASPAY_SECRET_KEY) {
-      const saspayPayload = {
-        amount: `${parsedAmount}.00`,
-        currency: 'XOF',
-        description: `Soutien : ${campaign.title}`,
-        customer_name: is_anonymous ? 'Anonyme' : (donor_name || 'Anonyme'),
-        customer_email: donor_email || 'donateur@donkai.app',
-        return_url: return_url || '',
-        metadata: {
-          donation_id: donation.id,
-          campaign_id: campaign.id,
-        },
-      }
-
-      const saspayRes = await fetch('https://api.saspay.me/api/v1/checkout-sessions/', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SASPAY_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(saspayPayload),
-      })
-
-      const saspayData = await saspayRes.json()
-      const session = saspayData?.data || saspayData
-      const checkoutUrl = session?.checkout_url
-      const sessionId = session?.id
-
-      if (saspayRes.ok && checkoutUrl) {
-        await supabase
-          .from('donations')
-          .update({ payment_session_id: sessionId })
-          .eq('id', donation.id)
-
-        return new Response(
-          JSON.stringify({
-            checkout_url: checkoutUrl,
-            donation_id: donation.id,
-          }),
-          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
-      }
-
-      console.error('SasPay checkout session creation failed:', saspayData)
+    // 5. Initier la session de paiement sécurisée auprès de l'agrégateur SasPay
+    if (!SASPAY_SECRET_KEY) {
       return new Response(
-        JSON.stringify({
-          error:
-            saspayData?.error?.detail ||
-            saspayData?.message ||
-            'Erreur lors de l’initialisation de la session de paiement SasPay',
-        }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Passerelle de paiement SasPay non configurée sur le serveur.' }),
+        { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
-    // Si aucune clé secrète marchande n'est active (développement local sans SasPay)
+    const saspayPayload = {
+      amount: `${parsedAmount}.00`,
+      currency: 'XOF',
+      description: `Soutien : ${campaign.title}`,
+      customer_name: is_anonymous ? 'Anonyme' : (donor_name || 'Anonyme'),
+      customer_email: donor_email || 'donateur@donkai.app',
+      return_url: returnUrl || '',
+      metadata: {
+        donation_id: donation.id,
+        campaign_id: campaign.id,
+      },
+    }
+
+    const saspayRes = await fetch('https://api.saspay.me/api/v1/checkout-sessions/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SASPAY_SECRET_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(saspayPayload),
+    })
+
+    const saspayData = await saspayRes.json()
+    const session = saspayData?.data || saspayData
+    const checkoutUrl = session?.checkout_url
+    const sessionId = session?.id
+
+    if (saspayRes.ok && checkoutUrl) {
+      await supabase
+        .from('donations')
+        .update({ payment_session_id: sessionId })
+        .eq('id', donation.id)
+
+      return new Response(
+        JSON.stringify({
+          checkout_url: checkoutUrl,
+          donation_id: donation.id,
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    console.error('SasPay checkout session creation failed:', saspayData)
     return new Response(
       JSON.stringify({
-        donation_id: donation.id,
-        status: 'pending',
-        is_local_demo: true,
+        error:
+          saspayData?.error?.detail ||
+          saspayData?.message ||
+          'Erreur lors de l’initialisation de la session de paiement SasPay',
       }),
-      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {
     return new Response(

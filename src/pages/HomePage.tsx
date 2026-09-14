@@ -1,4 +1,6 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { supabase } from '../lib/supabase'
 import { useI18n } from '../lib/i18n'
 import {
   ArrowRight,
@@ -11,7 +13,10 @@ import {
   Lock,
   ChevronDown,
   ExternalLink,
-  Heart,
+  Compass,
+  Users,
+  ChevronLeft,
+  Loader2,
 } from '../components/Icons'
 
 interface HomePageProps {
@@ -24,14 +29,29 @@ interface FaqItem {
   answer: string
 }
 
+interface PopularCampaign {
+  id: string
+  title: string
+  slug: string
+  description: string
+  goal_amount: number
+  collected_amount: number
+  contributions_count: number
+  profiles?: {
+    username: string
+    display_name: string
+    verification_status: string
+  }
+}
+
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   const { t, language } = useI18n()
+  const { user } = useAuth()
 
-  // Simulateur interactif dans le Hero (Démonstration du produit réel)
-  const [demoAmount, setDemoAmount] = useState(980000)
-  const demoGoal = 1500000
-  const demoProgress = Math.min(100, Math.round((demoAmount / demoGoal) * 100))
-  const [lastContributor, setLastContributor] = useState<string | null>(null)
+  // 3 collectes populaires réelles pour le Hero Carrousel
+  const [popularCampaigns, setPopularCampaigns] = useState<PopularCampaign[]>([])
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [loadingPopular, setLoadingPopular] = useState(true)
 
   // Onglet actif pour la section "Le produit en action"
   const [activeShowcaseTab, setActiveShowcaseTab] = useState<'campaign' | 'dashboard' | 'profile'>('campaign')
@@ -39,14 +59,56 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
   // FAQ Accordion interactif
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0)
 
-  const formatFcfa = (val: number): string => {
-    return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  useEffect(() => {
+    const fetchTopCampaigns = async () => {
+      try {
+        setLoadingPopular(true)
+        const { data, error } = await supabase
+          .from('campaigns')
+          .select(`
+            id,
+            title,
+            slug,
+            description,
+            goal_amount,
+            collected_amount,
+            contributions_count,
+            profiles:user_id (
+              username,
+              display_name,
+              verification_status
+            )
+          `)
+          .eq('status', 'active')
+          .order('collected_amount', { ascending: false })
+          .limit(3)
+
+        if (!error && data) {
+          const formatted = data.map((item: any) => ({
+            ...item,
+            profiles: Array.isArray(item.profiles) ? item.profiles[0] : item.profiles,
+          }))
+          setPopularCampaigns(formatted)
+        }
+      } catch (err) {
+        console.error('Erreur chargement collectes populaires:', err)
+      } finally {
+        setLoadingPopular(false)
+      }
+    }
+    fetchTopCampaigns()
+  }, [])
+
+  const handleCreateCampaignClick = () => {
+    if (user) {
+      onNavigate('/create')
+    } else {
+      onNavigate('/login')
+    }
   }
 
-  const handleSimulateDonation = (amount: number, donorName: string) => {
-    setDemoAmount((prev) => Math.min(demoGoal, prev + amount))
-    setLastContributor(`${donorName} (+${formatFcfa(amount)} FCFA)`)
-    setTimeout(() => setLastContributor(null), 3500)
+  const formatFcfa = (val: number): string => {
+    return (val || 0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
   }
 
   const faqListFr: FaqItem[] = [
@@ -66,7 +128,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       question: 'Quels sont les frais appliqués sur DONKAI ?',
       highlight: 'La création de collecte est 100 % gratuite.',
       answer:
-        ' Des frais transparents de 5 % + 100 FCFA par contribution réussie sont déduits du montant reçu pour couvrir l’infrastructure technique et les télécoms. Les retraits vers votre numéro Mobile Money sont sans aucun frais additionnel.',
+        ' Des frais transparents de 5 % par contribution réussie sont déduits du montant reçu. Aucun frais fixe additionnel n’est appliqué. Les retraits vers votre numéro Mobile Money sont sans aucun frais additionnel.',
     },
     {
       question: 'Comment et quand puis-je retirer l’argent collecté ?',
@@ -105,7 +167,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
       question: 'What fees are charged on DONKAI?',
       highlight: 'Starting a campaign is 100% free.',
       answer:
-        ' Transparent fees of 5% + 100 FCFA per successful donation are deducted from the received amount to cover telecom and platform infrastructure. Payout withdrawals to your Mobile Money are free of charge.',
+        ' Transparent 5% platform fee per successful donation is deducted from the received amount. No additional fixed fee is charged. Withdrawals to your Mobile Money are free of charge.',
     },
     {
       question: 'How and when can I withdraw collected funds?',
@@ -158,133 +220,194 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-14">
           <button
             type="button"
-            onClick={() => onNavigate('/create')}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all text-sm sm:text-base cursor-pointer"
+            onClick={handleCreateCampaignClick}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-orange-600 hover:bg-orange-700 text-white font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-orange-600/20 hover:shadow-orange-600/30 transition-all text-sm sm:text-base cursor-pointer"
           >
             <span>{t('hero.cta_primary')}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
-          <a
-            href="#how-it-works"
-            className="w-full sm:w-auto inline-flex items-center justify-center bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 text-gray-800 dark:text-zinc-200 font-bold py-3.5 px-6 rounded-2xl shadow-xs hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all text-sm cursor-pointer"
+          <button
+            type="button"
+            onClick={() => onNavigate('/explore')}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 hover:border-gray-300 dark:hover:border-zinc-600 text-gray-800 dark:text-zinc-200 font-bold py-3.5 px-6 rounded-2xl shadow-xs hover:bg-gray-50 dark:hover:bg-zinc-800 transition-all text-sm cursor-pointer"
           >
-            {t('hero.cta_secondary')}
-          </a>
+            <Compass className="w-4 h-4 text-orange-600" />
+            <span>Explorer les collectes</span>
+          </button>
         </div>
 
-        {/* APERÇU INTERACTIF DU PRODUIT DONKAI EN DIRECT */}
+        {/* CARROUSEL DYNAMIQUE DES 3 COLLECTES POPULAIRES EN DIRECT */}
         <div className="relative max-w-2xl mx-auto text-left">
           {/* Lueur subtile en arrière-plan */}
           <div className="absolute -inset-1.5 bg-gradient-to-r from-orange-400/20 via-amber-300/20 to-orange-500/20 rounded-[32px] blur-xl opacity-70 pointer-events-none" />
 
           <div className="relative bg-white dark:bg-[#12141f] rounded-3xl border border-orange-100 dark:border-zinc-800 shadow-xl p-5 sm:p-7 space-y-5">
-            {/* Barre d'état de l'aperçu */}
-            <div className="flex items-center justify-between gap-3 pb-4 border-b border-gray-100 dark:border-zinc-800">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-heading font-bold text-sm shadow-xs">
-                  KG
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-extrabold text-gray-950 dark:text-white font-heading">
-                      Projet Eau pour Gao
-                    </span>
-                    <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
-                      <CheckCircle2 className="w-3 h-3" />
-                      <span>{t('campaign.verified_badge')}</span>
-                    </span>
+            {loadingPopular ? (
+              <div className="py-12 flex flex-col items-center justify-center space-y-3">
+                <Loader2 className="w-7 h-7 text-orange-600 animate-spin" />
+                <p className="text-xs text-gray-400">Chargement des collectes populaires...</p>
+              </div>
+            ) : popularCampaigns.length === 0 ? (
+              <div className="py-10 text-center space-y-2">
+                <p className="text-sm font-bold text-gray-800 dark:text-zinc-200">
+                  Soyez le premier à lancer une collecte communautaire !
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCreateCampaignClick}
+                  className="text-xs font-bold text-orange-600 hover:underline"
+                >
+                  Créer ma collecte maintenant &rarr;
+                </button>
+              </div>
+            ) : (
+              (() => {
+                const camp = popularCampaigns[activeSlide] || popularCampaigns[0]
+                const goal = camp.goal_amount || 1
+                const collected = camp.collected_amount || 0
+                const progress = Math.min(100, Math.round((collected / goal) * 100))
+                const username = camp.profiles?.username || 'collecte'
+                const displayName = camp.profiles?.display_name || username
+                const isVerified = camp.profiles?.verification_status === 'verified'
+                const targetUrl = `/@${username}/${camp.slug}`
+
+                return (
+                  <div className="space-y-4">
+                    {/* En-tête du carrousel avec navigation 1, 2, 3 */}
+                    <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-zinc-800">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 bg-orange-50 dark:bg-orange-950/40 text-orange-700 dark:text-orange-400 text-[11px] font-bold px-2.5 py-1 rounded-xl">
+                          <Sparkles className="w-3 h-3" />
+                          Collecte populaire #{activeSlide + 1}
+                        </span>
+                      </div>
+
+                      {/* Contrôles carrousel */}
+                      <div className="flex items-center gap-1.5">
+                        {popularCampaigns.map((_, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => setActiveSlide(idx)}
+                            className={`h-2 rounded-full transition-all cursor-pointer ${
+                              activeSlide === idx
+                                ? 'w-5 bg-orange-600'
+                                : 'w-2 bg-gray-200 dark:bg-zinc-700 hover:bg-gray-300'
+                            }`}
+                          />
+                        ))}
+                        <div className="flex items-center gap-1 ml-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveSlide((prev) =>
+                                prev === 0 ? popularCampaigns.length - 1 : prev - 1
+                              )
+                            }
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 cursor-pointer"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setActiveSlide((prev) =>
+                                prev === popularCampaigns.length - 1 ? 0 : prev + 1
+                              )
+                            }
+                            className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-800 text-gray-500 cursor-pointer"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Profil de l'organisateur */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-orange-600 text-white flex items-center justify-center font-heading font-bold text-sm shadow-xs">
+                          {displayName.slice(0, 2).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-sm font-extrabold text-gray-950 dark:text-white font-heading">
+                              {displayName}
+                            </span>
+                            {isVerified && (
+                              <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/50 dark:border-emerald-800/50">
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>Vérifié</span>
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-400 dark:text-zinc-500 font-mono">
+                            @{username}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => onNavigate(targetUrl)}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/50 px-3.5 py-1.5 rounded-xl transition-colors cursor-pointer"
+                      >
+                        <span>Soutenir</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </button>
+                    </div>
+
+                    {/* Titre & Description de la collecte */}
+                    <div>
+                      <h3 className="font-heading font-bold text-base sm:text-lg text-gray-950 dark:text-white leading-snug">
+                        {camp.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-zinc-400 line-clamp-2 mt-1 leading-relaxed">
+                        {camp.description}
+                      </p>
+                    </div>
+
+                    {/* Progression dynamique */}
+                    <div className="space-y-2 pt-2">
+                      <div className="flex items-baseline justify-between">
+                        <div>
+                          <span className="text-xl sm:text-2xl font-heading font-extrabold text-gray-950 dark:text-white">
+                            {formatFcfa(collected)} FCFA
+                          </span>
+                          <span className="text-xs text-gray-400 dark:text-zinc-500 ml-1.5 font-medium">
+                            sur {formatFcfa(goal)} FCFA
+                          </span>
+                        </div>
+                        <span className="text-sm font-heading font-extrabold text-orange-600 dark:text-orange-400">
+                          {progress}%
+                        </span>
+                      </div>
+
+                      <div className="w-full h-2.5 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-orange-600 to-amber-500 rounded-full transition-all duration-500"
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+
+                      <div className="flex justify-between items-center text-[11px] text-gray-400 dark:text-zinc-500 font-medium pt-1">
+                        <div className="flex items-center gap-1">
+                          <Users className="w-3.5 h-3.5 text-orange-600" />
+                          <span>{camp.contributions_count || 0} soutiens reçus</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onNavigate('/explore')}
+                          className="text-orange-600 dark:text-orange-400 font-bold hover:underline"
+                        >
+                          Voir toutes les collectes &rarr;
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-400 dark:text-zinc-500 font-mono">donkai.app/@kalifa/eau-pour-gao</p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => onNavigate('/@kalifa/eau-pour-gao')}
-                className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 bg-orange-50 dark:bg-orange-950/40 hover:bg-orange-100 dark:hover:bg-orange-900/50 px-3 py-1.5 rounded-xl transition-colors cursor-pointer"
-              >
-                <span>Voir la page</span>
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
-
-            {/* Progression dynamique de la collecte */}
-            <div className="space-y-2">
-              <div className="flex items-baseline justify-between">
-                <div>
-                  <span className="text-2xl sm:text-3xl font-heading font-extrabold text-gray-950 dark:text-white">
-                    {formatFcfa(demoAmount)} FCFA
-                  </span>
-                  <span className="text-xs text-gray-400 dark:text-zinc-500 ml-1.5 font-medium">
-                    sur {formatFcfa(demoGoal)} FCFA
-                  </span>
-                </div>
-                <span className="text-base font-heading font-extrabold text-orange-600 dark:text-orange-400">
-                  {demoProgress}%
-                </span>
-              </div>
-
-              {/* Jauge de progression */}
-              <div className="w-full h-3 bg-gray-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500"
-                  style={{ width: `${demoProgress}%` }}
-                />
-              </div>
-
-              <div className="flex justify-between items-center text-[11px] text-gray-400 dark:text-zinc-500 font-medium pt-1">
-                <span>64 soutiens reçus</span>
-                <span>Paliers : 25%, 50%, 75%</span>
-                <span>45 jours restants</span>
-              </div>
-            </div>
-
-            {/* Notification de soutien en direct (si déclenchée) */}
-            {lastContributor && (
-              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 rounded-xl text-xs font-bold flex items-center gap-2 animate-fade-in">
-                <Heart className="w-4 h-4 text-emerald-600 fill-emerald-500" />
-                <span>Nouveau soutien enregistré : {lastContributor}</span>
-              </div>
+                )
+              })()
             )}
-
-            {/* Simulateur tactile instantané */}
-            <div className="pt-3 border-t border-gray-100 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <span className="text-gray-500 dark:text-zinc-400 font-medium">
-                Simuler un soutien Mobile Money :
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSimulateDonation(1000, 'Fatoumata D.')}
-                  className="bg-gray-50 dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300 hover:border-orange-200 dark:hover:border-orange-800 text-gray-800 dark:text-zinc-200 font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors cursor-pointer"
-                >
-                  +1 000 F
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSimulateDonation(5000, 'Ibrahim T.')}
-                  className="bg-gray-50 dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300 hover:border-orange-200 dark:hover:border-orange-800 text-gray-800 dark:text-zinc-200 font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors cursor-pointer"
-                >
-                  +5 000 F
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSimulateDonation(10000, 'Ousmane K.')}
-                  className="bg-gray-50 dark:bg-zinc-800 hover:bg-orange-50 dark:hover:bg-orange-950/40 hover:text-orange-700 dark:hover:text-orange-300 hover:border-orange-200 dark:hover:border-orange-800 text-gray-800 dark:text-zinc-200 font-bold px-3 py-1.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors cursor-pointer"
-                >
-                  +10 000 F
-                </button>
-                {demoAmount > 980000 && (
-                  <button
-                    type="button"
-                    onClick={() => setDemoAmount(980000)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-zinc-300 text-[11px] underline ml-1 cursor-pointer"
-                  >
-                    Reset
-                  </button>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -508,12 +631,12 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
                         <strong className="text-gray-900 dark:text-zinc-100">2 500 FCFA</strong>
                       </div>
                       <div className="flex justify-between text-gray-500 dark:text-zinc-400">
-                        <span>Frais (5% + 100 F)</span>
-                        <span>-225 FCFA</span>
+                        <span>Frais plateforme (5%)</span>
+                        <span>-125 FCFA</span>
                       </div>
                       <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-bold pt-1 border-t border-gray-200 dark:border-zinc-700">
                         <span>Net versé au projet</span>
-                        <span>2 275 FCFA</span>
+                        <span>2 375 FCFA</span>
                       </div>
                     </div>
                   </div>
@@ -616,8 +739,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-3xl mx-auto">
             {/* Orange Money */}
             <div className="p-6 rounded-3xl bg-[#faf9f6] dark:bg-[#13151f] border border-gray-200/70 dark:border-zinc-800 text-center space-y-3 hover:border-orange-300 dark:hover:border-orange-800 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-orange-100 dark:bg-orange-950/50 text-orange-600 dark:text-orange-400 flex items-center justify-center mx-auto font-bold">
-                <Smartphone className="w-6 h-6" />
+              <div className="h-12 flex items-center justify-center mx-auto">
+                <img src="/icons/orange-money.svg" alt="Orange Money" className="h-10 w-auto object-contain" />
               </div>
               <h4 className="font-heading font-extrabold text-gray-950 dark:text-white text-base">Orange Money</h4>
               <p className="text-xs text-gray-500 dark:text-zinc-400">Mali, Sénégal, Côte d'Ivoire, Guinée</p>
@@ -628,8 +751,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
             {/* Wave */}
             <div className="p-6 rounded-3xl bg-[#faf9f6] dark:bg-[#13151f] border border-gray-200/70 dark:border-zinc-800 text-center space-y-3 hover:border-sky-300 dark:hover:border-sky-800 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto font-bold">
-                <Smartphone className="w-6 h-6" />
+              <div className="h-12 flex items-center justify-center mx-auto">
+                <img src="/icons/wave.png" alt="Wave" className="h-10 w-auto object-contain" />
               </div>
               <h4 className="font-heading font-extrabold text-gray-950 dark:text-white text-base">Wave</h4>
               <p className="text-xs text-gray-500 dark:text-zinc-400">Mali, Sénégal, Côte d'Ivoire</p>
@@ -640,8 +763,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
 
             {/* Moov Money */}
             <div className="p-6 rounded-3xl bg-[#faf9f6] dark:bg-[#13151f] border border-gray-200/70 dark:border-zinc-800 text-center space-y-3 hover:border-emerald-300 dark:hover:border-emerald-800 transition-colors">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto font-bold">
-                <Smartphone className="w-6 h-6" />
+              <div className="h-12 flex items-center justify-center mx-auto">
+                <img src="/icons/moov-money.png" alt="Moov Money" className="h-10 w-auto object-contain" />
               </div>
               <h4 className="font-heading font-extrabold text-gray-950 dark:text-white text-base">Moov Money</h4>
               <p className="text-xs text-gray-500 dark:text-zinc-400">Mali, Bénin, Togo, Côte d'Ivoire</p>
@@ -658,8 +781,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate }) => {
               <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Pour créer votre collecte</p>
             </div>
             <div className="border-y sm:border-y-0 sm:border-x border-gray-200 dark:border-zinc-800 py-2 sm:py-0">
-              <span className="text-xl font-heading font-extrabold text-orange-600 dark:text-orange-400">5 % + 100 F</span>
-              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Par don reçu (frais inclus)</p>
+              <span className="text-xl font-heading font-extrabold text-orange-600 dark:text-orange-400">5 %</span>
+              <p className="text-xs text-gray-500 dark:text-zinc-400 mt-0.5">Par don reçu (sans frais fixes)</p>
             </div>
             <div>
               <span className="text-xl font-heading font-extrabold text-emerald-600 dark:text-emerald-400">0 FCFA</span>

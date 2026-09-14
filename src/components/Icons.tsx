@@ -43,4 +43,7 @@ export {
   ChevronDown,
   Layers,
   Award,
+  Settings,
+  Compass,
+  Building2,
 } from 'lucide-react'

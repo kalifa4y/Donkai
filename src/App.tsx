@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar'
 import { Footer } from './components/Footer'
 
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
+const ExplorePage = lazy(() => import('./pages/ExplorePage').then((m) => ({ default: m.ExplorePage })))
 const CampaignPage = lazy(() => import('./pages/CampaignPage').then((m) => ({ default: m.CampaignPage })))
 const CreatorProfilePage = lazy(() => import('./pages/CreatorProfilePage').then((m) => ({ default: m.CreatorProfilePage })))
 const CreateCampaignPage = lazy(() => import('./pages/CreateCampaignPage').then((m) => ({ default: m.CreateCampaignPage })))
@@ -89,6 +90,9 @@ export const App: React.FC = () => {
     }
 
     // 3. Routes applicatives standards
+    if (currentPath === '/explore') {
+      return <ExplorePage onNavigate={navigate} />
+    }
     if (currentPath === '/create') {
       return <CreateCampaignPage onNavigate={navigate} />
     }
@@ -116,7 +120,7 @@ export const App: React.FC = () => {
     <I18nProvider>
       <AuthProvider>
         <div className="min-h-screen flex flex-col bg-[#faf9f6] dark:bg-[#0c0d12] text-gray-900 dark:text-zinc-100 transition-colors duration-200">
-          <Navbar onNavigate={navigate} />
+          <Navbar onNavigate={navigate} currentPath={currentPath} />
           <main className="flex-1">
             <Suspense
               fallback={

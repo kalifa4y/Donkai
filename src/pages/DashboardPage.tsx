@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
+  Settings,
 } from '../components/Icons'
 
 interface DashboardPageProps {
@@ -254,10 +255,30 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('/settings')}
             className="inline-flex items-center gap-1.5 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 text-xs font-bold py-2.5 px-3.5 rounded-xl border border-gray-200 dark:border-zinc-700 transition-colors cursor-pointer"
           >
+            <Settings className="w-3.5 h-3.5 text-gray-500 dark:text-zinc-400" />
             <span>Paramètres</span>
           </button>
         </div>
       </div>
+
+      {/* Alerte si le portefeuille Mobile Money n'est pas encore configuré */}
+      {!profile?.wallet_number && (
+        <div className="p-4 bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-orange-950 dark:text-orange-200">
+          <div className="flex items-center gap-2.5">
+            <AlertCircle className="w-4 h-4 text-orange-600 dark:text-orange-400 shrink-0" />
+            <p>
+              <strong>Configuration requise :</strong> Vous n'avez pas encore renseigné votre numéro de versement Mobile Money.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigate('/settings')}
+            className="shrink-0 bg-orange-500 hover:bg-orange-600 text-white font-bold px-3.5 py-1.5 rounded-lg text-xs transition-colors cursor-pointer"
+          >
+            Configurer maintenant
+          </button>
+        </div>
+      )}
 
       {/* Alerte de sécurité verrouillage 30 jours (Section 19 du master prompt) */}
       {!walletUpdateStatus.allowed && (

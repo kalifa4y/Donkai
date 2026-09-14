@@ -150,17 +150,16 @@ export interface AuditLog {
 
 /**
  * Règle financière stricte validée :
- * 5% + 100 FCFA par contribution, déduits du montant reçu par le bénéficiaire.
+ * 5% de commission plateforme par contribution, déduits du montant reçu par le bénéficiaire.
+ * Zéro frais fixe additionnel.
  */
 export function calculateDonationFee(grossAmount: number): { fee: number; netAmount: number } {
   if (!grossAmount || grossAmount < 100) {
     return { fee: 0, netAmount: 0 }
   }
-  const variableFee = Math.round(grossAmount * 0.05)
-  const fixedFee = 100
-  const totalFee = variableFee + fixedFee
-  const net = Math.max(0, grossAmount - totalFee)
-  return { fee: totalFee, netAmount: net }
+  const fee = Math.round(grossAmount * 0.05)
+  const net = Math.max(0, grossAmount - fee)
+  return { fee, netAmount: net }
 }
 
 /**
