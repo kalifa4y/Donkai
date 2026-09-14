@@ -44,7 +44,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       await signInWithGoogle()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Erreur Google'
-      setError(`Impossible de se connecter avec Google : ${msg}`)
+      if (msg.includes('provider is not enabled') || msg.includes('Unsupported provider')) {
+        setError(
+          "L'authentification Google n'est pas encore activée dans votre tableau de bord Supabase (Authentication > Providers > Google). Vous pouvez vous connecter immédiatement avec votre email et mot de passe ci-dessous !"
+        )
+      } else {
+        setError(`Impossible de se connecter avec Google : ${msg}`)
+      }
       setLoading(false)
     }
   }
