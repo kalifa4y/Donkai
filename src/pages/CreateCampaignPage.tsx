@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
+import type { WalletProvider } from '../types'
 import {
   ArrowRight,
   ArrowLeft,
@@ -54,10 +55,28 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
   // Étape 3 : KYC express (obligatoire pour créer une collecte)
   const [docType, setDocType] = useState('cni')
   const [docNumber, setDocNumber] = useState('')
-  const [payoutNumber, setPayoutNumber] = useState(profile?.wallet_number || '')
-  const [payoutProvider, setPayoutProvider] = useState<'orange' | 'wave' | 'moov'>(
-    (profile?.wallet_provider as any) || 'orange'
+  const [payoutProvider, setPayoutProvider] = useState<WalletProvider>(
+    (profile?.wallet_provider as WalletProvider) || 'orange'
   )
+  const [payoutWallets, setPayoutWallets] = useState<Record<WalletProvider, string>>(() => {
+    const initial: Record<WalletProvider, string> = { orange: '', wave: '', moov: '', mtn: '' }
+    if (user?.id) {
+      try {
+        const cached = localStorage.getItem(`donkai_profile_${user.id}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed.wallets) return { ...initial, ...parsed.wallets }
+          if (parsed.wallet_provider && parsed.wallet_number) {
+            initial[parsed.wallet_provider as WalletProvider] = parsed.wallet_number
+          }
+        }
+      } catch {}
+    }
+    if (profile?.wallet_provider && profile?.wallet_number) {
+      initial[profile.wallet_provider as WalletProvider] = profile.wallet_number
+    }
+    return initial
+  })
 
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,13 +88,26 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
   }, [user, authLoading, onNavigate])
 
   useEffect(() => {
-    if (profile?.wallet_number && !payoutNumber) {
-      setPayoutNumber(profile.wallet_number)
-    }
-    if (profile?.wallet_provider) {
-      setPayoutProvider(profile.wallet_provider as any)
+    if (profile?.wallet_provider && profile?.wallet_number) {
+      setPayoutWallets((prev) => {
+        if (!prev[profile.wallet_provider as WalletProvider]) {
+          return {
+            ...prev,
+            [profile.wallet_provider as WalletProvider]: profile.wallet_number,
+          }
+        }
+        return prev
+      })
+      setPayoutProvider(profile.wallet_provider as WalletProvider)
     }
   }, [profile])
+
+  const handlePayoutNumberChange = (val: string) => {
+    setPayoutWallets((prev) => ({
+      ...prev,
+      [payoutProvider]: val,
+    }))
+  }
 
   // Génération automatique d'un slug propre
   const handleTitleChange = (val: string) => {
@@ -152,7 +184,8 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
       return
     }
 
-    if (!payoutNumber.trim()) {
+    const activePayoutNumber = (payoutWallets[payoutProvider] || '').trim()
+    if (!activePayoutNumber) {
       setError('Le numéro de réception Mobile Money est obligatoire pour percevoir les dons.')
       return
     }
@@ -185,7 +218,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               username: cleanUsername,
               display_name: user.fullName || 'Organisateur Donkai',
               email: user.email,
-              wallet_number: payoutNumber.trim(),
+              wallet_number: activePayoutNumber,
               wallet_provider: payoutProvider,
               verification_status: 'verified', // validé par saisie pièce d'identité
             })
@@ -204,7 +237,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
       await supabase
         .from('profiles')
         .update({
-          wallet_number: payoutNumber.trim(),
+          wallet_number: activePayoutNumber,
           wallet_provider: payoutProvider,
           verification_status: 'verified',
         })
@@ -254,6 +287,7 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
     } catch (err) {
       console.error('Erreur création collecte:', err)
       setError((err as Error).message || 'Une erreur est survenue lors de la publication.')
+    } finally {
       setSubmitting(false)
     }
   }
@@ -693,8 +727,8 @@ export const CreateCampaignPage: React.FC<CreateCampaignPageProps> = ({ onNaviga
               <input
                 type="tel"
                 required
-                value={payoutNumber}
-                onChange={(e) => setPayoutNumber(e.target.value)}
+                value={payoutWallets[payoutProvider] || ''}
+                onChange={(e) => handlePayoutNumberChange(e.target.value)}
                 placeholder="Numéro Mobile Money (Ex: +223 70 00 00 00)"
                 className="w-full bg-gray-50 dark:bg-zinc-800/60 border border-gray-200 dark:border-zinc-700 rounded-2xl py-2.5 px-4 text-xs sm:text-sm font-bold text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-600/30"
               />

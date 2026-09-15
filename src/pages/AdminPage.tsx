@@ -86,9 +86,9 @@ export const AdminPage: React.FC<AdminPageProps> = ({ onNavigate }) => {
 
       // 6. Dossiers KYC
       const { data: kycData } = await supabase
-        .from('verifications')
+        .from('verification_records')
         .select('*')
-        .order('submitted_at', { ascending: false })
+        .order('created_at', { ascending: false })
       setKycRecords(kycData || [])
 
       // 7. Journaux d'audit

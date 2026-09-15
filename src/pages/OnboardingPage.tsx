@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
-import type { WalletProvider } from '../types'
+import type { Profile, WalletProvider } from '../types'
 import {
   Check,
   Loader2,
@@ -14,6 +14,7 @@ import {
   Building2,
   Sparkles,
   Info,
+  Lock,
 } from '../components/Icons'
 
 interface OnboardingPageProps {
@@ -49,29 +50,32 @@ const ACCOUNT_TYPES: { id: AccountType; label: string; desc: string; icon: React
   },
 ]
 
-const OPERATORS: { id: WalletProvider; name: string; logo: string; color: string }[] = [
+const OPERATORS: { id: WalletProvider; name: string; logo: string; color: string; placeholder: string }[] = [
   {
     id: 'orange',
     name: 'Orange Money',
     logo: '/icons/orange-money.svg',
     color: 'hover:border-[#FF7900] dark:hover:border-[#FF7900]',
+    placeholder: 'Ex: +223 70 00 00 00 (Orange Mali)',
   },
   {
     id: 'wave',
     name: 'Wave',
     logo: '/icons/wave.png',
     color: 'hover:border-[#1BA7FE] dark:hover:border-[#1BA7FE]',
+    placeholder: 'Ex: +223 76 00 00 00 (Wave Mali)',
   },
   {
     id: 'moov',
     name: 'Moov Money',
     logo: '/icons/moov-money.png',
     color: 'hover:border-[#005CA9] dark:hover:border-[#005CA9]',
+    placeholder: 'Ex: +223 60 00 00 00 (Moov Mali)',
   },
 ]
 
 export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) => {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user, profile, refreshProfile, setProfileState } = useAuth()
 
   const [step, setStep] = useState<1 | 2 | 3>(1)
 
@@ -84,16 +88,58 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
   const requestIdRef = useRef(0)
 
-  // Étape 2 : Contact & Retrait
+  // Étape 2 : Contact & Retrait Multi-Opérateurs
   const [whatsappNumber, setWhatsappNumber] = useState('')
   const [walletProvider, setWalletProvider] = useState<WalletProvider>('orange')
-  const [walletNumber, setWalletNumber] = useState('')
+  const [wallets, setWallets] = useState<Record<WalletProvider, string>>(() => {
+    const initial: Record<WalletProvider, string> = { orange: '', wave: '', moov: '', mtn: '' }
+    if (user?.id) {
+      try {
+        const cached = localStorage.getItem(`donkai_profile_${user.id}`)
+        if (cached) {
+          const parsed = JSON.parse(cached)
+          if (parsed.wallets && typeof parsed.wallets === 'object') {
+            return { ...initial, ...parsed.wallets }
+          }
+          if (parsed.wallet_provider && parsed.wallet_number) {
+            initial[parsed.wallet_provider as WalletProvider] = parsed.wallet_number
+          }
+        }
+      } catch {}
+    }
+    return initial
+  })
 
-  // Étape 3 : KYC (Optionnel au setup, obligatoire avant publication)
+  // Synchronisation si le profil existant a déjà un portefeuille configuré
+  useEffect(() => {
+    if (profile?.wallet_provider && profile?.wallet_number) {
+      setWallets((prev) => {
+        if (!prev[profile.wallet_provider as WalletProvider]) {
+          return {
+            ...prev,
+            [profile.wallet_provider as WalletProvider]: profile.wallet_number,
+          }
+        }
+        return prev
+      })
+      setWalletProvider(profile.wallet_provider as WalletProvider)
+    }
+  }, [profile])
+
+  const handleWalletNumberChange = (val: string) => {
+    setWallets((prev) => ({
+      ...prev,
+      [walletProvider]: val,
+    }))
+  }
+
+  // Étape 3 : KYC (Optionnel au setup, obligatoire avant premier retrait)
   const [docType, setDocType] = useState<'cni' | 'passport' | 'nina'>('cni')
   const [docNumber, setDocNumber] = useState('')
 
+  // États de chargement découplés pour éliminer tout blocage ou spinner infini
   const [submitting, setSubmitting] = useState(false)
+  const [skipping, setSkipping] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -207,8 +253,10 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
     e.preventDefault()
     setError(null)
 
-    if (!walletNumber.trim()) {
-      setError('Le numéro de versement Mobile Money est obligatoire pour recevoir vos fonds.')
+    const activeNum = (wallets[walletProvider] || '').trim()
+    if (!activeNum) {
+      const opName = OPERATORS.find((o) => o.id === walletProvider)?.name || walletProvider
+      setError(`Le numéro de versement pour ${opName} est obligatoire pour recevoir vos fonds.`)
       return
     }
 
@@ -219,11 +267,14 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
     setError(null)
     if (!user) return
 
-    const cleanUsername = username.toLowerCase().trim()
-    setSubmitting(true)
+    if (skipKyc) {
+      setSkipping(true)
+    } else {
+      setSubmitting(true)
+    }
 
     try {
-      // Composition de la description / bio incluant le rôle et le contact WhatsApp
+      const cleanUsername = username.toLowerCase().trim()
       const roleLabel = ACCOUNT_TYPES.find((t) => t.id === accountType)?.label || 'Particulier'
       let finalBio = bio.trim()
       if (whatsappNumber.trim()) {
@@ -231,62 +282,118 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
         finalBio = finalBio ? `${contactTag}\n${finalBio}` : contactTag
       }
 
-      // 1. Sauvegarde du profil
-      const { data: newProfile, error: insertError } = await supabase
-        .from('profiles')
-        .insert({
-          clerk_user_id: user.id,
-          username: cleanUsername,
-          display_name: displayName.trim() || cleanUsername,
-          email: user.email,
-          bio: finalBio || null,
-          wallet_provider: walletProvider,
-          wallet_number: walletNumber.trim(),
-          wallet_last_updated_at: new Date().toISOString(),
-          verification_status: 'unverified',
-        })
-        .select('id')
-        .single()
+      const activeWalletNumber = (wallets[walletProvider] || '').trim()
 
-      if (insertError) {
-        console.warn('Supabase profile insertion warning:', insertError.message)
+      const profilePayload = {
+        clerk_user_id: user.id,
+        username: cleanUsername,
+        display_name: displayName.trim() || cleanUsername,
+        email: user.email,
+        bio: finalBio || null,
+        wallet_provider: walletProvider,
+        wallet_number: activeWalletNumber,
+        wallet_last_updated_at: new Date().toISOString(),
+        verification_status: 'unverified',
       }
 
-      const createdId = newProfile?.id || user.id
+      // Upsert dans Supabase avec watchdog de 4s pour garantir qu'aucune promesse ne bloque l'UI
+      const saveSupabaseProfile = async (): Promise<{ id: string } | null> => {
+        try {
+          // Vérifier d'abord si le profil existe déjà
+          const { data: existing } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('clerk_user_id', user.id)
+            .maybeSingle()
+
+          if (existing?.id) {
+            const { data: updated, error: updateErr } = await supabase
+              .from('profiles')
+              .update(profilePayload)
+              .eq('id', existing.id)
+              .select('id')
+              .maybeSingle()
+            if (updateErr) console.warn('Supabase profile update warning:', updateErr.message)
+            return updated || existing
+          } else {
+            const { data: inserted, error: insertErr } = await supabase
+              .from('profiles')
+              .insert(profilePayload)
+              .select('id')
+              .maybeSingle()
+            if (insertErr) console.warn('Supabase profile insert warning:', insertErr.message)
+            return inserted || null
+          }
+        } catch (dbErr) {
+          console.warn('Supabase database access warning:', dbErr)
+          return null
+        }
+      }
+
+      const watchdog = new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000))
+      const savedProfile = await Promise.race([saveSupabaseProfile(), watchdog])
+      const createdId = savedProfile?.id || user.id
 
       // 2. Si KYC renseigné dès l'étape 3
       if (!skipKyc && docNumber.trim() && createdId) {
         try {
-          await supabase.from('verification_records').insert({
-            user_id: createdId,
-            document_type: docType,
-            document_number: docNumber.trim(),
-            status: 'pending',
-          })
+          const kycWatchdog = new Promise<null>((resolve) => setTimeout(() => resolve(null), 3000))
+          await Promise.race([
+            supabase.from('verification_records').insert({
+              user_id: createdId,
+              document_type: docType,
+              document_number: docNumber.trim(),
+              status: 'pending',
+            }),
+            kycWatchdog,
+          ])
         } catch (kycErr) {
           console.warn('KYC record notice:', kycErr)
         }
       }
 
-      // Stockage local de secours
+      // 3. Mise à jour immédiate du cache local et du state AuthContext
+      const completeProfile: Profile = {
+        id: createdId,
+        clerk_user_id: user.id,
+        username: cleanUsername,
+        display_name: displayName.trim() || cleanUsername,
+        email: user.email,
+        avatar_url: null,
+        bio: finalBio || null,
+        wallet_provider: walletProvider,
+        wallet_number: activeWalletNumber,
+        wallet_last_updated_at: new Date().toISOString(),
+        verification_status: 'unverified',
+        is_admin: profile?.is_admin || false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+
       localStorage.setItem(
         `donkai_profile_${user.id}`,
         JSON.stringify({
-          clerk_user_id: user.id,
-          username: cleanUsername,
-          display_name: displayName.trim() || cleanUsername,
+          ...completeProfile,
           account_type: accountType,
           whatsapp_number: whatsappNumber.trim(),
-          wallet_provider: walletProvider,
-          wallet_number: walletNumber.trim(),
+          wallets,
         })
       )
 
-      await refreshProfile()
+      // Injecter directement dans AuthContext pour réactivité instantanée
+      setProfileState(completeProfile)
+
+      // Déclencher un rafraîchissement non bloquant en arrière-plan
+      refreshProfile().catch(() => {})
+
+      // Navigation directe vers le tableau de bord
       onNavigate('/dashboard')
     } catch (err) {
+      console.error('Erreur lors de la configuration du profil :', err)
       setError((err as Error).message || 'Erreur lors de la configuration du profil.')
+    } finally {
       setSubmitting(false)
+      setSkipping(false)
     }
   }
 
@@ -491,12 +598,13 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
               <div className="grid grid-cols-3 gap-2.5">
                 {OPERATORS.map((op) => {
                   const isSelected = walletProvider === op.id
+                  const hasNumber = Boolean(wallets[op.id]?.trim())
                   return (
                     <button
                       key={op.id}
                       type="button"
                       onClick={() => setWalletProvider(op.id)}
-                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all cursor-pointer ${
+                      className={`p-3 rounded-2xl border flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer ${
                         isSelected
                           ? 'border-orange-500 bg-orange-50/50 dark:bg-orange-950/20 ring-2 ring-orange-500/30'
                           : `border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 ${op.color}`
@@ -504,27 +612,34 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
                     >
                       <img src={op.logo} alt={op.name} className="h-6 w-auto object-contain max-w-[80px]" />
                       <span className="text-[11px] font-bold text-gray-900 dark:text-white">{op.name}</span>
+                      {hasNumber && (
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded-md">
+                          <Check className="w-2.5 h-2.5" />
+                          Renseigné
+                        </span>
+                      )}
                     </button>
                   )
                 })}
               </div>
             </div>
 
-            {/* Numéro Mobile Money */}
+            {/* Numéro Mobile Money spécifique à l'opérateur sélectionné */}
             <div>
               <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 uppercase tracking-wider mb-1.5">
-                Numéro Mobile Money du compte de retrait *
+                Numéro {OPERATORS.find((o) => o.id === walletProvider)?.name || 'Mobile Money'} du compte de retrait *
               </label>
               <input
                 type="tel"
                 required
-                placeholder="Ex: +223 70 00 00 00"
-                value={walletNumber}
-                onChange={(e) => setWalletNumber(e.target.value)}
+                placeholder={OPERATORS.find((o) => o.id === walletProvider)?.placeholder || 'Ex: +223 70 00 00 00'}
+                value={wallets[walletProvider] || ''}
+                onChange={(e) => handleWalletNumberChange(e.target.value)}
                 className="w-full bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 rounded-xl px-4 py-3 text-xs font-bold text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
               />
-              <p className="text-[11px] text-amber-700 dark:text-amber-400/90 font-medium mt-1">
-                🔒 Règle de sécurité : après enregistrement, toute modification de ce numéro est verrouillée pendant 30 jours contre l'usurpation.
+              <p className="text-[11px] text-amber-700 dark:text-amber-400/90 font-medium mt-1 flex items-start gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <span>Règle de sécurité : après enregistrement, toute modification de ce numéro est verrouillée pendant 30 jours contre l'usurpation.</span>
               </p>
             </div>
 
@@ -617,16 +732,23 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
 
               <button
                 type="button"
-                disabled={submitting}
+                disabled={submitting || skipping}
                 onClick={() => handleFinalSubmit(true)}
-                className="flex-1 border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200 font-bold py-3 px-4 rounded-xl text-xs transition-colors cursor-pointer text-center"
+                className="flex-1 border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 text-gray-800 dark:text-zinc-200 font-bold py-3 px-4 rounded-xl text-xs transition-colors cursor-pointer text-center disabled:opacity-50"
               >
-                {submitting ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : 'Fournir la pièce plus tard'}
+                {skipping ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <Loader2 className="w-4 h-4 animate-spin text-orange-600 dark:text-orange-400" />
+                    <span>Finalisation...</span>
+                  </span>
+                ) : (
+                  'Fournir la pièce plus tard'
+                )}
               </button>
 
               <button
                 type="button"
-                disabled={submitting || !docNumber.trim()}
+                disabled={submitting || skipping || !docNumber.trim()}
                 onClick={() => handleFinalSubmit(false)}
                 className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl shadow-xs transition-all text-xs flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
               >

@@ -14,6 +14,7 @@ export interface AuthContextType {
   user: AuthUser | null
   profile: Profile | null
   loading: boolean
+  setProfileState: (profile: Profile | null) => void
   refreshProfile: () => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  setProfileState: () => {},
   refreshProfile: async () => {},
   signInWithGoogle: async () => {},
   signInWithEmail: async () => ({ error: null }),
@@ -52,6 +54,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
   const [, startTransition] = useTransition()
 
+  const setProfileState = (p: Profile | null) => {
+    setProfile(p)
+  }
+
   const fetchProfile = async (userId: string, email?: string | null) => {
     try {
       let query = supabase.from('profiles').select('*')
@@ -74,18 +80,43 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       query = query.or(filters.join(','))
-      const { data, error } = await query.maybeSingle()
+      const watchdog = new Promise<{ data: null; error: null }>((resolve) =>
+        setTimeout(() => resolve({ data: null, error: null }), 3000)
+      )
+      const { data, error } = await Promise.race([query.maybeSingle(), watchdog])
 
       if (error) {
         console.warn('Profil non trouvé ou erreur :', error.message)
-        setProfile(null)
-      } else if (data) {
+      }
+
+      if (data) {
         setProfile(data)
       } else {
+        // Fallback sur le profil local si présent
+        const cached = localStorage.getItem(`donkai_profile_${userId}`)
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached)
+            setProfile(parsed)
+            return
+          } catch {
+            // ignore
+          }
+        }
         setProfile(null)
       }
     } catch (err) {
       console.error('Erreur fetchProfile :', err)
+      const cached = localStorage.getItem(`donkai_profile_${userId}`)
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          setProfile(parsed)
+          return
+        } catch {
+          // ignore
+        }
+      }
       setProfile(null)
     }
   }
@@ -312,6 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         profile,
         loading,
+        setProfileState,
         refreshProfile,
         signInWithGoogle,
         signInWithEmail,
