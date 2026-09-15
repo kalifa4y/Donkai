@@ -1,5 +1,5 @@
 -- ============================================================================
--- DONKAI — Row Level Security (RLS) Policies for Supabase + Clerk Authentication
+-- DONKAI — Row Level Security (RLS) Policies (Supabase Native Authentication)
 -- Matches supabase/schema.sql (profiles, campaigns, donations, payouts, reports, verification_records, audit_logs)
 -- ============================================================================
 
@@ -12,14 +12,19 @@ ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- 2. Fonctions auxiliaires pour extraire l'identifiant utilisateur (Supabase Auth natif + rétrocompatibilité)
-CREATE OR REPLACE FUNCTION requesting_clerk_id()
+-- 2. Fonctions auxiliaires pour extraire l'identifiant utilisateur (Supabase Auth natif)
+CREATE OR REPLACE FUNCTION requesting_user_id()
 RETURNS text AS $$
   SELECT COALESCE(
     auth.uid()::text,
     nullif(current_setting('request.jwt.claim.sub', true), ''),
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
   );
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION requesting_clerk_id()
+RETURNS text AS $$
+  SELECT requesting_user_id();
 $$ LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION is_admin_user()

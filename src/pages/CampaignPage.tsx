@@ -113,7 +113,7 @@ export const CampaignPage: React.FC<CampaignPageProps> = ({ username, slug, onNa
     updated_at: new Date().toISOString(),
     profile: {
       id: 'demo-user-kalifa',
-      clerk_user_id: 'clerk_kalifa',
+      clerk_user_id: 'usr_kalifa',
       username: username || 'kalifa',
       display_name: 'Kalifa Coulibaly',
       email: 'kalifa@donkai.app',

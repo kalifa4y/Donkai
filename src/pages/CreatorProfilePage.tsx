@@ -46,7 +46,7 @@ export const CreatorProfilePage: React.FC<CreatorProfilePageProps> = ({ username
   // Données de secours de démonstration pour le profil
   const getDemoProfile = (): Profile => ({
     id: 'demo-user-kalifa',
-    clerk_user_id: 'clerk_kalifa',
+    clerk_user_id: 'usr_kalifa',
     username: username || 'kalifa',
     display_name: 'Kalifa Coulibaly',
     email: 'kalifa@donkai.app',

@@ -1,5 +1,5 @@
 -- ========================================================
--- DONKAI — Database Schema (Supabase PostgreSQL + Clerk ID)
+-- DONKAI — Database Schema (Supabase PostgreSQL + Native Auth)
 -- ========================================================
 
 -- 0. Nettoyage préventif des tables de l'ancien prototype (creators, donations avec creator_id)
@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS campaigns CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS creators CASCADE;
 
--- 1. Table des profils utilisateurs (Liée à l'identifiant Clerk)
+-- 1. Table des profils utilisateurs (Liée à l'identifiant d'authentification Supabase)
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clerk_user_id TEXT UNIQUE NOT NULL,

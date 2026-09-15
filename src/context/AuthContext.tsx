@@ -14,7 +14,6 @@ export interface AuthContextType {
   user: AuthUser | null
   profile: Profile | null
   loading: boolean
-  isClerkConfigured: boolean
   refreshProfile: () => Promise<void>
   signInWithGoogle: () => Promise<void>
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>
@@ -27,7 +26,6 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
-  isClerkConfigured: false,
   refreshProfile: async () => {},
   signInWithGoogle: async () => {},
   signInWithEmail: async () => ({ error: null }),
@@ -314,7 +312,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         user,
         profile,
         loading,
-        isClerkConfigured: false,
         refreshProfile,
         signInWithGoogle,
         signInWithEmail,

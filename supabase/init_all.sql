@@ -1,5 +1,5 @@
 -- ========================================================
--- DONKAI — Database Schema (Supabase PostgreSQL + Clerk ID)
+-- DONKAI — Database Schema (Supabase PostgreSQL + Native Auth)
 -- ========================================================
 
 -- 0. Nettoyage préventif des tables de l'ancien prototype (creators, donations avec creator_id)
@@ -12,7 +12,7 @@ DROP TABLE IF EXISTS campaigns CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS creators CASCADE;
 
--- 1. Table des profils utilisateurs (Liée à l'identifiant Clerk)
+-- 1. Table des profils utilisateurs (Liée à l'authentification Supabase)
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   clerk_user_id TEXT UNIQUE NOT NULL,
@@ -146,7 +146,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action, created_a
 
 
 -- ============================================================================
--- DONKAI — Row Level Security (RLS) Policies for Supabase + Clerk Authentication
+-- DONKAI — Row Level Security (RLS) Policies (Supabase Native Authentication)
 -- Matches supabase/schema.sql (profiles, campaigns, donations, payouts, reports, verification_records, audit_logs)
 -- ============================================================================
 
@@ -159,13 +159,19 @@ ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE verification_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- 2. Fonctions auxiliaires pour extraire l'identifiant Clerk et vérifier le rôle admin
-CREATE OR REPLACE FUNCTION requesting_clerk_id()
+-- 2. Fonctions auxiliaires pour extraire l'identifiant et vérifier le rôle admin
+CREATE OR REPLACE FUNCTION requesting_user_id()
 RETURNS text AS $$
   SELECT COALESCE(
+    auth.uid()::text,
     nullif(current_setting('request.jwt.claim.sub', true), ''),
     (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
   );
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION requesting_clerk_id()
+RETURNS text AS $$
+  SELECT requesting_user_id();
 $$ LANGUAGE sql STABLE;
 
 CREATE OR REPLACE FUNCTION is_admin_user()

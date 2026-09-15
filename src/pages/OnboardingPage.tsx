@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext'
 import type { WalletProvider } from '../types'
@@ -82,6 +82,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
   const [bio, setBio] = useState('')
   const [checkingUsername, setCheckingUsername] = useState(false)
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null)
+  const requestIdRef = useRef(0)
 
   // Étape 2 : Contact & Retrait
   const [whatsappNumber, setWhatsappNumber] = useState('')
@@ -105,30 +106,53 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
     }
   }, [user, profile, displayName, onNavigate])
 
-  // Vérification de la disponibilité du nom d'utilisateur
+  // Vérification de la disponibilité du nom d'utilisateur (avec watchdog 2s & annulation requêtes obsolètes)
   useEffect(() => {
     const cleaned = username.toLowerCase().trim()
     if (cleaned.length < 3) {
       setUsernameAvailable(null)
+      setCheckingUsername(false)
       return
     }
 
-    const timer = setTimeout(async () => {
-      setCheckingUsername(true)
-      const { data } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('username', cleaned)
-        .maybeSingle()
+    const currentReqId = ++requestIdRef.current
+    setCheckingUsername(true)
 
-      setUsernameAvailable(!data)
-      setCheckingUsername(false)
+    const timer = setTimeout(async () => {
+      try {
+        const watchdog = new Promise<null>((resolve) => setTimeout(() => resolve(null), 2000))
+        const checkQuery = async () => {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', cleaned)
+            .maybeSingle()
+          if (error) return null
+          return data
+        }
+
+        const result = await Promise.race([checkQuery(), watchdog])
+
+        if (requestIdRef.current === currentReqId) {
+          // Si null (aucun enregistrement trouvé ou watchdog expiré), identifiant considéré libre
+          setUsernameAvailable(result === null)
+        }
+      } catch (err) {
+        console.warn('Vérification disponibilité identifiant :', err)
+        if (requestIdRef.current === currentReqId) {
+          setUsernameAvailable(true)
+        }
+      } finally {
+        if (requestIdRef.current === currentReqId) {
+          setCheckingUsername(false)
+        }
+      }
     }, 300)
 
     return () => clearTimeout(timer)
   }, [username])
 
-  const handleNextStep1 = (e: React.FormEvent) => {
+  const handleNextStep1 = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
@@ -143,14 +167,37 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
       return
     }
 
+    if (!displayName.trim()) {
+      setError('Veuillez renseigner votre nom complet ou le nom de votre organisation.')
+      return
+    }
+
     if (usernameAvailable === false) {
       setError("Cet identifiant est déjà utilisé. Veuillez en choisir un autre.")
       return
     }
 
-    if (!displayName.trim()) {
-      setError('Veuillez renseigner votre nom complet ou le nom de votre organisation.')
-      return
+    // Si une vérification était encore en cours au moment du clic, validation directe rapide (watchdog 1.5s)
+    if (usernameAvailable === null || checkingUsername) {
+      try {
+        const checkQuery = async () => {
+          const { data } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('username', cleanUsername)
+            .maybeSingle()
+          return data
+        }
+        const watchdog = new Promise<null>((resolve) => setTimeout(() => resolve(null), 1500))
+        const result = await Promise.race([checkQuery(), watchdog])
+        if (result?.id) {
+          setUsernameAvailable(false)
+          setError("Cet identifiant est déjà utilisé. Veuillez en choisir un autre.")
+          return
+        }
+      } catch {
+        // En cas d'erreur de connexion, ne pas bloquer l'utilisateur
+      }
     }
 
     setStep(2)
@@ -398,7 +445,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onNavigate }) =>
 
             <button
               type="submit"
-              disabled={checkingUsername || usernameAvailable === false}
+              disabled={usernameAvailable === false}
               className="w-full mt-3 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-xl shadow-xs transition-all text-xs sm:text-sm flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
             >
               <span>Continuer vers le paiement</span>
